@@ -18,9 +18,11 @@ router = APIRouter(prefix="/ai", tags=["AI"])
 class AIRequest(BaseModel):
     prompt: str
 
+class AIResponse(BaseModel):
+    answer: str
 
 @router.post("/ask/{user_id}")
-def ask_ai_tutor(user_id: int, request: AIRequest, question: str, db: Session = Depends(get_db)): 
+def ask_ai_tutor(user_id: int, request: AIRequest, question: str, response_model=AIResponse, db: Session = Depends(get_db)): 
     user = db.query(User).get(user_id)
     answer = ask_ai(request.prompt)
 
