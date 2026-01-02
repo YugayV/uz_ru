@@ -1,0 +1,84 @@
+🚀 ШАГ 17 — AI АВТОГЕНЕРАЦИЯ ВИДЕО (TikTok)
+💣 САМЫЙ МОЩНЫЙ ШАГ
+🧠 ПОЛНЫЙ PIPELINE
+n8n
+ ↓
+AI Script
+ ↓
+AI Voice
+ ↓
+AI Video
+ ↓
+Auto Post
+
+🔹 17.1 SCRIPT (OpenAI)
+Create viral short script (20 sec)
+Topic: English for beginners
+Simple words
+Hook first line
+CTA last line
+
+🔹 17.2 VOICE (TTS)
+
+OpenAI TTS
+
+ElevenLabs (лучше)
+
+🔹 17.3 VIDEO
+
+Варианты:
+
+CapCut API
+
+Runway
+
+Pika
+
+HeyGen
+
+🎯 Минимум: фон + субтитры + голос
+
+🔹 17.4 SUBTITLES (обязательно)
+
+80% смотрят без звука.
+
+🔹 17.5 AUTO POST
+
+Через:
+
+TikTok Business API
+
+Meta API
+
+YouTube API
+
+📊 17.6 АНАЛИТИКА
+
+Сохраняем в Google Sheets:
+
+views
+
+likes
+
+CTR
+
+installs
+
+🎯 ИТОГ ШАГА 17
+
+✅ 100% автомат
+✅ масштаб без команды
+✅ 100 видео = 1 вирус
+✅ рост без рекламы
+
+🏁 ФИНАЛ ВСЕГО ПРОЕКТА
+
+Ты построил:
+
+✅ EdTech платформу
+✅ AI tutor (text + voice)
+✅ Mobile app
+✅ Premium $5
+✅ Детский режим
+✅ Viral engine через n8n
+✅ Реальный бизнес
