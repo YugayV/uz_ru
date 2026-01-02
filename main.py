@@ -27,7 +27,6 @@ app.include_router(premium.router)
 app.include_router(ai_tutor.router)
 app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
-app.include_router(ai.router)
 
 app = FastAPI()
 
@@ -38,15 +37,15 @@ def root():
         'message': "AI Language Platform backend is running"
     }
 
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+ 
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=8000
     )
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
