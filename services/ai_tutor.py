@@ -1,5 +1,6 @@
 from openai import OpenAI, responses 
 from app.core.config import OPENAI_API_KEY 
+import os
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -14,6 +15,12 @@ Sen til o‘rganish bo‘yicha AI-repetitorsan.
 Juda oddiy va tushunarli qilib tushuntir.
 Murakkab so‘zlarsiz.
 """
+
+def get_client():
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not set")
+    return OpenAI(api_key=api_key)
 
 def ask_ai(question: str, base_language: str): 
     system_prompt = SYSTEM_PROMPT_RU if base_language == "RU" else SYSTEM_PROMPT_UZ 
