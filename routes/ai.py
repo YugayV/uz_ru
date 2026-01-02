@@ -9,9 +9,20 @@ router = APIRouter(prefix="/ai", tags=["AI Tutor"])
 
 FREE_LIMIT = 5 
 
+from fastapi import APIRouter
+from pydantic import BaseModel
+from app.services.ai_tutor import ask_ai
+
+router = APIRouter(prefix="/ai", tags=["AI"])
+
+class AIRequest(BaseModel):
+    prompt: str
+
+
 @router.post("/ask/{user_id}")
-def ask_ai_tutor(user_id: int, question: str, db: Session = Depends(get_db)): 
+def ask_ai_tutor(user_id: int, request: AIRequest, question: str, db: Session = Depends(get_db)): 
     user = db.query(User).get(user_id)
+    answer = ask_ai(request.prompt)
 
     if not user: 
         raise HTTPException(status_code=404, detail='User not found')

@@ -27,6 +27,7 @@ app.include_router(premium.router)
 app.include_router(ai_tutor.router)
 app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
+app.include_router(ai.router)
 
 app = FastAPI()
 
@@ -43,4 +44,9 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000
     )
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
