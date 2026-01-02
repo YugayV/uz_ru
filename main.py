@@ -7,6 +7,7 @@ from app.routes import leaderboard
 from app.routes import premium
 from app.routes import ai_tutor
 from app.routes import payments, stripe_webhook
+import uvicorn
 
 Base.metadata.create_all(bind=engine)
 
@@ -27,11 +28,19 @@ app.include_router(ai_tutor.router)
 app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
 
-@app.get('/')
-def root(): 
+app = FastAPI()
+
+@app.get("/")
+def root():
     return { 
         "status": 'ok', 
         'message': "AI Language Platform backend is running"
     }
 
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000
+    )
 
