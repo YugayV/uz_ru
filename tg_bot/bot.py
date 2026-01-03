@@ -1,15 +1,18 @@
 import os 
 import asyncio 
-from telegram import Update 
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ( 
     ApplicationBuilder, 
     MessageHandler, 
     CommandHandler,
     ContextTypes, 
-    filters, 
+    filters,
+    CallbackQueryHandler,
 )
 import logging
 from dotenv import load_dotenv
+from services.progress import is_premium, enable_premium
+from services.ai_tutor import ask_ai 
 
 # Configure logging
 logging.basicConfig(
@@ -20,12 +23,12 @@ logger = logging.getLogger(__name__)
 
 # Load environment variables from .env
 load_dotenv()
-
-from services.ai_tutor import ask_ai 
-from app.tg_bot.keyboards import main_menu 
+from .keyboards import main_menu, payment_menu
 from app.tg_bot.states import user_state, MODE_CHILD, MODE_STUDY
 from app.tg_bot.games import math_game
 from services.lives import get_lives, use_life
+from services.stripe_service import create_checkout
+from services.paypal_service import create_paypal_order
 
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -80,6 +83,32 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("📘 Режим учёбы активен.")
         return
 
+    if text == "⭐ Premium":
+        if is_premium(user_id):
+            await update.message.reply_text(
+                "⭐ У тебя уже активен Premium!\n"
+                "Наслаждайся обучением 🚀"
+            )
+        else:
+            await update.message.reply_text(
+                "🌟 **Premium Доступ**\n\n"
+                "• Безлимитные жизни ❤️\n"
+                "• Приоритетный AI (GPT-4o)\n"
+                "• Доступ ко всем играм\n\n"
+                "Выберите способ оплаты (или напишите ACTIVATE для теста):",
+                reply_markup=payment_menu,
+                parse_mode="Markdown"
+            )
+        return
+
+    if text == "ACTIVATE":
+        enable_premium(user_id)
+        await update.message.reply_text(
+            "🎉 Premium активирован!\n"
+            "Жизни теперь бесконечны ❤️♾"
+        )
+        return
+
     if text == "🎮 Игра":
         game = math_game()
         await update.message.reply_text(f"🎲 Игра началась!\n{game['question']}")
@@ -109,6 +138,29 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(answer)
 
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not query or not query.from_user:
+        return
+    
+    await query.answer()
+    user_id = query.from_user.id
+    
+    if query.data == "pay_stripe":
+        url = create_checkout(user_id)
+        await query.edit_message_text(
+            f"💳 **Оплата Картой (Visa/Mastercard)**\n\nНажмите кнопку ниже для перехода к оплате:",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🎯 Оплатить $5", url=url)]]),
+            parse_mode="Markdown"
+        )
+    elif query.data == "pay_paypal":
+        url = create_paypal_order(user_id)
+        await query.edit_message_text(
+            f"🅿️ **Оплата через PayPal**\n\nНажмите кнопку ниже для перехода к оплате:",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🎯 Оплатить $5", url=url)]]),
+            parse_mode="Markdown"
+        )
+
 def start_bot(): 
     if not BOT_TOKEN:
         logger.error("❌ Cannot start bot: TELEGRAM_BOT_TOKEN is missing!")
@@ -117,6 +169,7 @@ def start_bot():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
+    app.add_handler(CallbackQueryHandler(handle_callback))
     
     masked_token = f"{BOT_TOKEN[:5]}...{BOT_TOKEN[-5:]}" if len(BOT_TOKEN) > 10 else "***"
     logger.info(f"Bot is starting with token: {masked_token}")

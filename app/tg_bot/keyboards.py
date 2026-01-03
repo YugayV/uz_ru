@@ -1,4 +1,4 @@
-from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
 main_menu = ReplyKeyboardMarkup(
     [
@@ -8,3 +8,10 @@ main_menu = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True
 )
+
+payment_menu = InlineKeyboardMarkup([
+    [
+        InlineKeyboardButton("💳 Visa/Mastercard (Stripe)", callback_data="pay_stripe"),
+        InlineKeyboardButton("🅿️ PayPal", callback_data="pay_paypal")
+    ]
+])

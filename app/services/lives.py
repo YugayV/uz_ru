@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta 
+from datetime import datetime
 
 MAX_LIVES = 6 
 RESTORE_MINUTES = 30 # 1live 30minutes 
@@ -13,7 +13,6 @@ def restore_lives_if_needed(user):
         user.last_life_restore = now
 
     diff = now - user.last_life_restore 
-
     restored = diff.seconds // (RESTORE_MINUTES * 60)
 
     if restored > 0: 
@@ -25,5 +24,6 @@ def lose_life(user):
         return 
 
     if user.lives > 0: 
-        user.lives -=1
+        user.lives -= 1
+
         

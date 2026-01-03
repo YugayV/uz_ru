@@ -27,3 +27,15 @@ def can_access_lesson(db: Session, user_id: int, lesson: Lesson) -> bool:
     )
 
     return progress is not None
+
+# user_id -> bool
+_premium_users = set()
+
+def is_premium(user_id: int) -> bool:
+    return user_id in _premium_users
+
+def enable_premium(user_id: int):
+    _premium_users.add(user_id)
+
+def disable_premium(user_id: int):
+    _premium_users.discard(user_id)
