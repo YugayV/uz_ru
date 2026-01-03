@@ -3,12 +3,15 @@ from app.core.config import DEEPSEEK_API_KEY
 import os
 from services import child_prompt
 
-# Initialize DeepSeek client
-# DeepSeek is compatible with OpenAI SDK
-client = OpenAI(
-    api_key=DEEPSEEK_API_KEY, 
-    base_url="https://api.deepseek.com"
-)
+# Initialize DeepSeek client safely to prevent startup crashes
+def get_deepseek_client():
+    key = DEEPSEEK_API_KEY or os.getenv("DEEPSEEK_API_KEY") or "EMPTY"
+    return OpenAI(
+        api_key=key, 
+        base_url="https://api.deepseek.com"
+    )
+
+client = get_deepseek_client()
 
 SYSTEM_PROMPT_RU = """
 Ты AI-репетитор по изучению языков.
@@ -35,6 +38,9 @@ def ask_ai(question: str, mode: str='study', base_language: str='RU'):
         system_prompt = SYSTEM_PROMPT_RU if base_language == "RU" else SYSTEM_PROMPT_UZ
 
     try:
+        if client.api_key == "EMPTY":
+            return "❌ API ключ DeepSeek не настроен в Railway (DEEPSEEK_API_KEY)."
+            
         response = client.chat.completions.create(
             model="deepseek-chat", 
             messages=[ 
