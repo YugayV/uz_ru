@@ -30,7 +30,7 @@ def ask_ai(question: str, mode: str='study', base_language: str='RU'):
         system_prompt = SYSTEM_PROMPT_RU if base_language == "RU" else SYSTEM_PROMPT_UZ
 
     response = client.chat.completions.create(  # type: ignore 
-        model="gpt-4.1-mini", 
+        model="gpt-4o-mini", 
         messages=[ 
             {"role": "system", "content": system_prompt}, 
             {"role":"user", "content": question}

@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from app.database import Base, engine
 import asyncio 
-from routes import ai
+from contextlib import asynccontextmanager
+import uvicorn
 
 from app.routes import (
     users,
@@ -17,13 +18,22 @@ from app.routes import (
     stripe_webhook
 )
 
-import uvicorn
-
+# Initialize database
 Base.metadata.create_all(bind=engine)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # This runs when the server starts
+    print("🚀 AI Language Platform API is starting...")
+    # You can start other background tasks here if needed
+    yield
+    # This runs when the server stops
+    print("🛑 AI Language Platform API is shutting down...")
 
 app = FastAPI(
     title="AI Language Learning Platform",
-    version="1.1.0"
+    version="1.1.0",
+    lifespan=lifespan
 )
 
 # === ROUTERS ===
@@ -38,10 +48,6 @@ app.include_router(leaderboard.router)
 app.include_router(premium.router)
 app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
-
-@app.on_event("startup")
-def startup(): 
-    pass
 
 # === SYSTEM ===
 @app.get("/")

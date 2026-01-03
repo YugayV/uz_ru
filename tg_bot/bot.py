@@ -9,7 +9,7 @@ from telegram.ext import (
     filters, 
 )
 
-from app.services.ai_tutor import ask_ai 
+from services.ai_tutor import ask_ai 
 from tg_bot.keyboards import main_menu 
 from tg_bot.states import user_state, MODE_CHILD, MODE_STUDY
 from tg_bot.games import math_game
@@ -50,6 +50,12 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("📘 Режим учёбы активен.")
         return
 
+    if text == "🎮 Игра":
+        game = math_game()
+        await update.message.reply_text(f"🎲 Игра началась!\n{game['question']}")
+        user_state[user_id] = ("game", str(game["answer"]))
+        return
+
     mode = user_state.get(user_id, MODE_STUDY)
 
     prompt = text
@@ -59,23 +65,33 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_state[user_id] = ("game", game["answer"])
         return
 
-if isinstance(user_state.get(user_id), tuple):
-    _, correct = user_state[user_id]
-    if text.strip() == correct:
-        await update.message.reply_text("🎉 Correct! You are smart 🦫")
-    else:
-        await update.message.reply_text("❌ Try again!")
-    user_state[user_id] = MODE_CHILD
-    return
 
-answer = ask_ai(text, mode=mode)
+    if isinstance(user_state.get(user_id), tuple):
+        _, correct = user_state[user_id]
+        if text.strip() == correct:
+            await update.message.reply_text("🎉 Correct! You are smart 🦫")
+        else:
+            await update.message.reply_text("❌ Try again!")
+        user_state[user_id] = MODE_CHILD
+        return
+
+    try:
+        answer = ask_ai(text, mode=mode)
+        if not answer:
+            answer = "Sorry, I couldn't generate a response."
+    except Exception as e:
+        print(f"Error calling AI: {e}")
+        answer = "⚠️ Error: AI Tutor is currently unavailable."
+
+    await update.message.reply_text(answer)
 
 def start_bot(): 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
-    print("Bot is polling...")
-    app.run_polling()
+    print(f"Bot is starting with token: {BOT_TOKEN[:5]}...{BOT_TOKEN[-5:]}")
+    print("🚀 Bot is polling... Press Ctrl+C to stop.")
+    app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     start_bot()
