@@ -17,6 +17,8 @@ from services.ai_tutor import ask_ai
 from app.tg_bot.keyboards import main_menu 
 from app.tg_bot.states import user_state, MODE_CHILD, MODE_STUDY
 from app.tg_bot.games import math_game
+from app.services.lives import get_lives, use_life
+
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 

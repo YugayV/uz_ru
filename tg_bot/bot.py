@@ -17,6 +17,8 @@ from services.ai_tutor import ask_ai
 from app.tg_bot.keyboards import main_menu 
 from app.tg_bot.states import user_state, MODE_CHILD, MODE_STUDY
 from app.tg_bot.games import math_game
+from services.lives import get_lives, use_life
+
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
@@ -41,16 +43,37 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     user_id = update.message.from_user.id
+    lives = get_lives(user_id)
+
+    if lives <= 0:
+        await update.message.reply_text(
+            "❤️ У тебя закончились жизни.\n"
+            "⏳ Попробуй завтра или включи ⭐ Premium."
+        )
+        return
+
+    if not use_life(user_id):
+        await update.message.reply_text(
+            "❤️ Жизни закончились.\n"
+            "⏳ Попробуй позже."
+        )
+        return
+
     text = update.message.text
     print(f"Received message from {user_id}: {text}")
 
     if text == "👶 Детский режим":
         user_state[user_id] = MODE_CHILD
         await update.message.reply_text(
-            "🧸 Детский режим включён!\nЗадай вопрос 👇"
+            "🧸 Детский режим включён!\nЗадай вопрос 👇",
+            f"🦫 У тебя осталось {lives} сердечек ❤️"
         )
         return
 
+        await update.message.reply_text(
+            
+)
+        return
     if text == "📘 Учёба":
         user_state[user_id] = MODE_STUDY
         await update.message.reply_text("📘 Режим учёбы активен.")

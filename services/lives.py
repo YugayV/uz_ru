@@ -1,29 +1,44 @@
 from datetime import datetime, time, timedelta 
+import time
 
-MAX_LIVES = 6 
-RESTORE_MINUTES = 30 # 1live 30minutes 
+MAX_LIVES = 6
+RESET_SECONDS = 24 * 60 * 60  # 24 часа
 
-def restore_lives_if_needed(user): 
-    if user.is_premium: 
-        user.lives = MAX_LIVES 
-        return 
+# user_id -> { lives: int, last_reset: timestamp }
+_lives = {}
 
-    now = datetime.utcnow()
-    if user.last_life_restore is None:
-        user.last_life_restore = now
+def _reset_if_needed(user_id: int):
+    now = time.time()
+    data = _lives.get(user_id)
 
-    diff = now - user.last_life_restore 
+    if not data:
+        _lives[user_id] = {
+            "lives": MAX_LIVES,
+            "last_reset": now
+        }
+        return
 
-    restored = diff.seconds // (RESTORE_MINUTES * 60)
+    if now - data["last_reset"] >= RESET_SECONDS:
+        data["lives"] = MAX_LIVES
+        data["last_reset"] = now
 
-    if restored > 0: 
-        user.lives = min(MAX_LIVES, user.lives + restored)
-        user.last_life_restore = now 
+def get_lives(user_id: int) -> int:
+    _reset_if_needed(user_id)
+    return _lives[user_id]["lives"]
 
-def lose_life(user): 
-    if user.is_premium: 
-        return 
+def use_life(user_id: int) -> bool:
+    _reset_if_needed(user_id)
 
-    if user.lives > 0: 
-        user.lives -=1
+    if _lives[user_id]["lives"] <= 0:
+        return False
+
+    _lives[user_id]["lives"] -= 1
+    return True
+
+def add_lives(user_id: int, amount: int):
+    _reset_if_needed(user_id)
+    _lives[user_id]["lives"] += amount
+    if _lives[user_id]["lives"] > MAX_LIVES:
+        _lives[user_id]["lives"] = MAX_LIVES
+
         
