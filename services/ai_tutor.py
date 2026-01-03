@@ -1,9 +1,14 @@
-from openai import OpenAI, responses 
-from app.core.config import OPENAI_API_KEY 
+from openai import OpenAI
+from app.core.config import DEEPSEEK_API_KEY
 import os
 from services import child_prompt
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+# Initialize DeepSeek client
+# DeepSeek is compatible with OpenAI SDK
+client = OpenAI(
+    api_key=DEEPSEEK_API_KEY, 
+    base_url="https://api.deepseek.com"
+)
 
 SYSTEM_PROMPT_RU = """
 Ты AI-репетитор по изучению языков.
@@ -18,10 +23,10 @@ Murakkab so‘zlarsiz.
 """
 
 def get_client():
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("DEEPSEEK_API_KEY")
     if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set")
-    return OpenAI(api_key=api_key)
+        raise RuntimeError("DEEPSEEK_API_KEY is not set")
+    return OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
 
 def ask_ai(question: str, mode: str='study', base_language: str='RU'): 
     if mode == "child":
@@ -29,15 +34,18 @@ def ask_ai(question: str, mode: str='study', base_language: str='RU'):
     else:
         system_prompt = SYSTEM_PROMPT_RU if base_language == "RU" else SYSTEM_PROMPT_UZ
 
-    response = client.chat.completions.create(  # type: ignore 
-        model="gpt-4o-mini", 
-        messages=[ 
-            {"role": "system", "content": system_prompt}, 
-            {"role":"user", "content": question}
-        ],
-        temperature=0.4
-        
-    )
-
-    return response.choices[0].message.content
+    try:
+        response = client.chat.completions.create(
+            model="deepseek-chat", 
+            messages=[ 
+                {"role": "system", "content": system_prompt}, 
+                {"role":"user", "content": question}
+            ],
+            temperature=0.4
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"DeepSeek Error: {e}")
+        # Fallback or re-raise
+        return "⚠️ Ошибка при подключении к DeepSeek. Проверьте баланс или API ключ."
 
