@@ -38,11 +38,17 @@ Murakkab atamalardan qoch.
 Do‘stona va qo‘llab-quvvatlovchi bo‘l.
 """
 
-def ask_ai(question: str, mode: str = "study", base_language: str = "RU") -> str:
+def ask_ai(question: str, mode: str = "study", base_language: str = "RU", age: int | None = None, lesson_type: str | None = None) -> str:
     if mode == "child":
         system_prompt = SYSTEM_PROMPT_CHILD_RU if base_language == "RU" else SYSTEM_PROMPT_CHILD_UZ
     else:
         system_prompt = SYSTEM_PROMPT_RU if base_language == "RU" else SYSTEM_PROMPT_UZ
+    
+    # Custom adjustments based on age or lesson_type
+    if age:
+        system_prompt += f"\nNote: The user is {age} years old. Adjust your tone accordingly."
+    if lesson_type:
+        system_prompt += f"\nContext: This is a '{lesson_type}' lesson."
 
     try:
         if client.api_key == "EMPTY":
