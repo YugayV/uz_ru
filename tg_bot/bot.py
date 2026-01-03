@@ -67,7 +67,7 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def start_bot(): 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
+    app.add_handler(MessageHandler(filters.TEXT, on_message))
     app.run_polling()
 
 if __name__ == "__main__":
