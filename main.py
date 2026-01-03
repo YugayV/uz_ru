@@ -3,7 +3,7 @@ from app.database import Base, engine
 import asyncio 
 import threading
 
-from telegram.bot import start_bot
+from tg_bot.bot import start_bot
 from routes import ai
 
 from app.routes import (
@@ -26,7 +26,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="AI Language Learning Platform",
-    version="0.6.0"
+    version="0.7.0"
 )
 
 # === ROUTERS ===
