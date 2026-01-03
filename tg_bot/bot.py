@@ -8,6 +8,10 @@ from telegram.ext import (
     ContextTypes, 
     filters, 
 )
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
 
 from services.ai_tutor import ask_ai 
 from tg_bot.keyboards import main_menu 
@@ -17,7 +21,9 @@ from tg_bot.games import math_game
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
 if not BOT_TOKEN:
-    raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
+    print("❌ ERROR: TELEGRAM_BOT_TOKEN is not set in environment or .env file")
+    # Don't raise immediately, let's see if we can log it first
+    # raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.from_user:
@@ -58,25 +64,19 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     mode = user_state.get(user_id, MODE_STUDY)
 
-    prompt = text
-    if mode == MODE_CHILD and text.lower() == "game":
-        game = math_game()
-        await update.message.reply_text(game["question"])
-        user_state[user_id] = ("game", game["answer"])
-        return
-
-
     if isinstance(user_state.get(user_id), tuple):
-        _, correct = user_state[user_id]
-        if text.strip() == correct:
-            await update.message.reply_text("🎉 Correct! You are smart 🦫")
-        else:
-            await update.message.reply_text("❌ Try again!")
-        user_state[user_id] = MODE_CHILD
-        return
+        state_type, correct = user_state[user_id]
+        if state_type == "game":
+            if text.strip() == correct:
+                await update.message.reply_text("🎉 Correct! You are smart 🦫")
+            else:
+                await update.message.reply_text(f"❌ Try again! (Answer was {correct})")
+            user_state[user_id] = MODE_CHILD # Reset to a default mode after game
+            return
 
     try:
-        answer = ask_ai(text, mode=mode)
+        # Note: base_language is hardcoded to RU for now in this handler
+        answer = ask_ai(text, mode=mode, base_language='RU')
         if not answer:
             answer = "Sorry, I couldn't generate a response."
     except Exception as e:
@@ -86,10 +86,16 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(answer)
 
 def start_bot(): 
+    if not BOT_TOKEN:
+        print("❌ Cannot start bot: TELEGRAM_BOT_TOKEN is missing!")
+        return
+
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
-    print(f"Bot is starting with token: {BOT_TOKEN[:5]}...{BOT_TOKEN[-5:]}")
+    
+    masked_token = f"{BOT_TOKEN[:5]}...{BOT_TOKEN[-5:]}" if len(BOT_TOKEN) > 10 else "***"
+    print(f"Bot is starting with token: {masked_token}")
     print("🚀 Bot is polling... Press Ctrl+C to stop.")
     app.run_polling(drop_pending_updates=True)
 
