@@ -1,9 +1,6 @@
 from fastapi import FastAPI
 from app.database import Base, engine
 import asyncio 
-import threading
-
-from tg_bot.bot import start_bot
 from routes import ai
 
 from app.routes import (
@@ -26,7 +23,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="AI Language Learning Platform",
-    version="0.9.0"
+    version="1.0.0"
 )
 
 # === ROUTERS ===
@@ -44,12 +41,7 @@ app.include_router(stripe_webhook.router)
 
 @app.on_event("startup")
 def startup(): 
-    loop = asyncio.new_event_loop()
-    threading.Thread( 
-        target=loop.run_until_complete, 
-        args=(start_bot(),), 
-        daemon=True
-    ).start()
+    pass
 
 # === SYSTEM ===
 @app.get("/")
