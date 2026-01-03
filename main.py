@@ -1,8 +1,14 @@
 from fastapi import FastAPI
-from app.database import Base, engine
 import asyncio 
 from contextlib import asynccontextmanager
 import uvicorn
+import os
+from dotenv import load_dotenv
+
+# Load environment variables before importing routes
+load_dotenv()
+
+from app.database import Base, engine
 
 from app.routes import (
     users,

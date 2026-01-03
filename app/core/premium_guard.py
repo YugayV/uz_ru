@@ -6,6 +6,7 @@ from app.services.premium import check_premium
 from fastapi import APIRouter
 from pydantic import BaseModel
 from openai import OpenAI
+from app.core.config import OPENAI_API_KEY
 
 def require_premium(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).get(user_id)
@@ -14,7 +15,7 @@ def require_premium(user_id: int, db: Session = Depends(get_db)):
     return True
 
 router = APIRouter()
-client = OpenAI()
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 class AIRequest(BaseModel):
     lang_from: str
