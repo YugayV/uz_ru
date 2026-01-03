@@ -8,6 +8,7 @@ from app.routes import premium
 from app.routes import ai_tutor
 from app.routes import payments, stripe_webhook
 import uvicorn
+from routes import router
 
 Base.metadata.create_all(bind=engine)
 
@@ -42,6 +43,14 @@ def root():
 def health():
     return {"status": "ok"}
  
+
+@router.post("/lesson")
+def create_lesson(data: dict):
+    return {
+        "status": "created",
+        "lesson": data
+    }
+
 
 if __name__ == "__main__":
     uvicorn.run(
