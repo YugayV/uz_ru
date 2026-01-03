@@ -8,7 +8,7 @@ from app.routes import premium
 from app.routes import ai_tutor
 from app.routes import payments, stripe_webhook
 import uvicorn
-from routes import router
+from routes.lessons import router
 
 Base.metadata.create_all(bind=engine)
 
