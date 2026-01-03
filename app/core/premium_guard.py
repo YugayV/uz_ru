@@ -14,8 +14,13 @@ def require_premium(user_id: int, db: Session = Depends(get_db)):
         return False
     return True
 
+def get_openai_client():
+    if not OPENAI_API_KEY:
+        return None
+    return OpenAI(api_key=OPENAI_API_KEY)
+
 router = APIRouter()
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = get_openai_client()
 
 class AIRequest(BaseModel):
     lang_from: str
@@ -23,11 +28,17 @@ class AIRequest(BaseModel):
 
 @router.post("/ask")
 async def ask_ai(req: AIRequest):
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": f"Explain simply in {req.lang_from}"},
-            {"role": "user", "content": req.question}
-        ]
-    )
-    return {"answer": response.choices[0].message.content}
+    if not client:
+        return {"answer": "⚠️ OpenAI API key is missing. Please add OPENAI_API_KEY to your .env or ini file."}
+    
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": f"Explain simply in {req.lang_from}"},
+                {"role": "user", "content": req.question}
+            ]
+        )
+        return {"answer": response.choices[0].message.content}
+    except Exception as e:
+        return {"answer": f"⚠️ Error calling OpenAI: {str(e)}"}
