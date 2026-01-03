@@ -8,3 +8,4 @@ openai
 python-multipart
 stripe
 python-telegram-bot
+gTTS
