@@ -1,6 +1,7 @@
 from openai import OpenAI, responses 
 from app.core.config import OPENAI_API_KEY 
 import os
+from services import child_prompt
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -22,16 +23,29 @@ def get_client():
         raise RuntimeError("OPENAI_API_KEY is not set")
     return OpenAI(api_key=api_key)
 
-def ask_ai(question: str, base_language: str): 
+def ask_ai(question: str, base_language: str, text: str, mode: str='study'): 
     system_prompt = SYSTEM_PROMPT_RU if base_language == "RU" else SYSTEM_PROMPT_UZ 
 
-    response = client.chat.completions.create( 
+    api_key = os.getenv("OPENAI_API_KEY")
+    client = OpenAI(api_key=api_key)
+
+    prompt = text
+    if mode == "child":
+        prompt = child_prompt(text)
+
+    response = client.chat.completions.create(  # type: ignore 
         model="gpt-4.1-mini", 
         messages=[ 
             {"role": "system", "content": system_prompt}, 
             {"role":"user", "content": question}
-        ], 
+        ],
         temperature=0.4
+        
     )
 
     return response.choices[0].message.content
+
+    response1 = client.responses.create( 
+        input=prompt
+    )
+    return response1.output_text
