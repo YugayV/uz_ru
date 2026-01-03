@@ -30,4 +30,9 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start_bot(): 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))
-    await app.run_polling(stop_signals=None)
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+    
+    # Keep the bot running
+    await asyncio.Event().wait()
