@@ -1,12 +1,13 @@
 from fastapi import FastAPI 
-from app.database import Base, engine 
-from app.routes import users, levels, lessons, lives
-from app.routes import ai
-from app.routes import progress
-from app.routes import leaderboard
-from app.routes import premium
-from app.routes import ai_tutor
-from app.routes import payments, stripe_webhook
+from database import Base, engine 
+from routes import users, levels, lessons, lives
+from routes import ai
+from routes import progress
+from routes import leaderboard
+from routes import premium
+from routes import ai_tutor
+from routes import payments, stripe_webhook
+from routes import telegram
 
 Base.metadata.create_all(bind=engine)
 
@@ -26,6 +27,8 @@ app.include_router(premium.router)
 app.include_router(ai_tutor.router)
 app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
+app.include_router(telegram.router)
+
 
 @app.get('/')
 def root(): 
