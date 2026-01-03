@@ -23,15 +23,11 @@ def get_client():
         raise RuntimeError("OPENAI_API_KEY is not set")
     return OpenAI(api_key=api_key)
 
-def ask_ai(question: str, base_language: str, text: str, mode: str='study'): 
-    system_prompt = SYSTEM_PROMPT_RU if base_language == "RU" else SYSTEM_PROMPT_UZ 
-
-    api_key = os.getenv("OPENAI_API_KEY")
-    client = OpenAI(api_key=api_key)
-
-    prompt = text
+def ask_ai(question: str, mode: str='study', base_language: str='RU'): 
     if mode == "child":
-        prompt = child_prompt(text)
+        system_prompt = child_prompt.SYSTEM_PROMPT_CHILD_RU if base_language == "RU" else child_prompt.SYSTEM_PROMPT_CHILD_UZ
+    else:
+        system_prompt = SYSTEM_PROMPT_RU if base_language == "RU" else SYSTEM_PROMPT_UZ
 
     response = client.chat.completions.create(  # type: ignore 
         model="gpt-4.1-mini", 
@@ -45,7 +41,3 @@ def ask_ai(question: str, base_language: str, text: str, mode: str='study'):
 
     return response.choices[0].message.content
 
-    response1 = client.responses.create( 
-        input=prompt
-    )
-    return response1.output_text
