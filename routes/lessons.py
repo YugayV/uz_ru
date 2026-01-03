@@ -10,12 +10,15 @@ import app.database
 router = APIRouter(prefix="/lessons", tags=["Lessons"])
 
 @router.post("/", response_model=LessonOut)
-def create_lesson(lesson: LessonCreate, db: Session = Depends(get_db)): 
+def create_lesson(lesson: LessonCreate, data: dict, db: Session = Depends(get_db)): 
     db_lesson = Lesson(**lesson.model_dump())
     db.add(db_lesson)
     db.commit()
     db.refresh(db_lesson)
-    return db_lesson
+    return db_lesson, {
+        "status": "created",
+        "lesson": data
+    }
 
 @router.get("/by-level/{level_id}", response_model = list[LessonOut])
 def get_lessons_by_level(level_id: int, db: Session = Depends(get_db)): 
@@ -23,7 +26,8 @@ def get_lessons_by_level(level_id: int, db: Session = Depends(get_db)):
         db.query(Lesson)
         .filter(Lesson.level_id == level_id)
         .order_by(Lesson.order)
-        .all()
+        .all(), 
+        {"lessons": []}
     )
 
 
@@ -34,3 +38,4 @@ def get_lessons_by_level(level_id: int, db: Session = Depends(get_db)):
     )
     db.add(lesson)
     db.commit()
+
