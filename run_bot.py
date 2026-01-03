@@ -10,6 +10,6 @@ logging.basicConfig(
 
 if __name__ == "__main__":
     try:
-        asyncio.run(start_bot())
+        start_bot()
     except KeyboardInterrupt:
         pass
