@@ -16,6 +16,15 @@ SYSTEM_PROMPT_RU = """
 Ты AI-репетитор по изучению языков.
 Объясняй максимально просто, как для новичка.
 Без сложных терминов.
+Ты детский AI.
+Никогда:
+- не говори про насилие
+- не говори про взрослых темы
+- не задавай вопросы про семью
+- не проси личные данные
+Говори коротко.
+Хвали ребёнка.
+
 """
 
 SYSTEM_PROMPT_UZ = """
@@ -38,11 +47,29 @@ Murakkab atamalardan qoch.
 Do‘stona va qo‘llab-quvvatlovchi bo‘l.
 """
 
-def ask_ai(question: str, mode: str = "study", base_language: str = "RU", age: int | None = None, lesson_type: str | None = None) -> str:
+def ask_ai(question: str, mode: str = "study", native_language: str = "RU", learning_language: str = "UZ", age: int | None = None, lesson_type: str | None = None, base_language: str | None = None) -> str:
+    # Use native_language or fallback to base_language for compatibility
+    native_lang = native_language or base_language or "RU"
+    
     if mode == "child":
-        system_prompt = SYSTEM_PROMPT_CHILD_RU if base_language == "RU" else SYSTEM_PROMPT_CHILD_UZ
+        system_prompt = SYSTEM_PROMPT_CHILD_RU if native_lang == "RU" else SYSTEM_PROMPT_CHILD_UZ
+        # Add child-specific rules and context
+        system_prompt += f"""
+Ты детский AI для обучения языкам.
+Возраст: {age or 'не указан'}
+Родной язык: {native_lang}
+Изучаемый язык: {learning_language}
+
+Правила:
+- сначала родной язык
+- потом иностранное слово
+- потом повтор
+- коротко
+- весело
+"""
     else:
-        system_prompt = SYSTEM_PROMPT_RU if base_language == "RU" else SYSTEM_PROMPT_UZ
+        system_prompt = SYSTEM_PROMPT_RU if native_lang == "RU" else SYSTEM_PROMPT_UZ
+
     
     # Custom adjustments based on age or lesson_type
     if age:

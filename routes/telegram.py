@@ -3,6 +3,8 @@ import requests
 from fastapi import APIRouter, Request
 from gtts import gTTS
 import uuid
+from app.services.limits import allowed
+
 
 router = APIRouter(prefix="/telegram", tags=["Telegram"])
 
@@ -65,4 +67,9 @@ async def telegram_webhook(req: Request):
         ai = requests.post(BACKEND_AI_URL, json=payload).json()
         send_voice(chat_id, ai["voice_text"], lang="ru")
 
+    if not allowed(chat_id): 
+        send_voice(chat_id, "Давай отдохнём! Поиграем позже 😊")
+
     return {"ok": True}
+
+

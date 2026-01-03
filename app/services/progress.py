@@ -42,3 +42,12 @@ def enable_premium(user_id: int):
 def disable_premium(user_id: int):
     """Disable premium access for a user."""
     _premium_users.discard(user_id)
+
+
+PROGRESS = {}
+
+def add_word(chat_id, word, language):
+    PROGRESS.setdefault(chat_id, {}).setdefault(language, set()).add(word)
+
+def count_words(chat_id, language):
+    return len(PROGRESS.get(chat_id, {}).get(language, []))
