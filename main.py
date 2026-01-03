@@ -26,7 +26,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="AI Language Learning Platform",
-    version="0.7.0"
+    version="0.8.0"
 )
 
 # === ROUTERS ===
