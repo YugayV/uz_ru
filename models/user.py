@@ -29,6 +29,10 @@ class User(Base):
     streak = Column(Integer, default=0)
     points = Column(Integer, default=0)
     last_activity_date = Column(Date, default=None)
-
+    
+    
+    telegram_id: int
+    role: str  # child | parent
+    parent_id: int | None
     
    

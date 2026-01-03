@@ -11,3 +11,10 @@ class UserLessonProgress(Base):
 
     completed = Column(Boolean, default=False)
     completed_at = Column(DateTime, default=None)
+
+class Progress(Base):
+    user_id: int
+    language: str
+    lessons_done: int
+    accuracy: float
+    streak: int

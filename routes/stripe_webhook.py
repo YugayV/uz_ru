@@ -5,7 +5,8 @@ from app.core.deps import get_db
 from app.models.user import User
 from app.services.premium import activate_premium
 from fastapi import APIRouter, Depends, HTTPException 
-
+import os
+from services.subscription import set_plan
 
 router = APIRouter()
 

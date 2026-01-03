@@ -1,4 +1,5 @@
 import time
+from .subscription import get_plan
 
 MAX_ADS_PER_DAY = 3
 REWARD_LIVES = 2
@@ -29,3 +30,12 @@ def can_watch_ad(user_id: int) -> bool:
 def register_ad_view(user_id: int):
     _reset_if_needed(user_id)
     _ads[user_id]["views"] += 1
+
+def show_ad(chat_id):
+    if get_plan(chat_id) == "free":
+        return "📺 Посмотри короткое видео, чтобы продолжить!"
+
+def restore_life(chat_id):
+    if get_plan(chat_id) == "free":
+        return "❤️ +1 жизнь за просмотр рекламы"
+
