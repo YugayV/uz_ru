@@ -11,7 +11,7 @@ def can_access_lesson(db: Session, user_id: int, lesson: Lesson) -> bool:
         db.query(Lesson)
         .filter( 
             Lesson.level_id == lesson.level_id, 
-            Lesson.oreder == lesson.order - 1
+            Lesson.order == lesson.order - 1
         )
         .first()
     )

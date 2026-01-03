@@ -11,8 +11,10 @@ from telegram.ext import (
 )
 import logging
 from dotenv import load_dotenv
-from services.progress import is_premium, enable_premium
+from services.premium import is_premium, enable_premium
 from services.ai_tutor import ask_ai 
+from services.ads import can_watch_ad, register_ad_view
+from services.lives import add_lives, get_lives
 
 # Configure logging
 logging.basicConfig(
@@ -76,6 +78,11 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"🧸 Детский режим включён!\nЗадай вопрос 👇\n\n🦫 У тебя осталось {lives} сердечек ❤️"
         )
+        return
+        await update.message.reply_text(
+        f"🦫 Молодец!\n"
+        f"Ты получил 2 сердечка ❤️❤️"
+)
         return
 
     if text == "📘 Учёба":

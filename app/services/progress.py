@@ -4,22 +4,22 @@ from app.models.progress import UserLessonProgress
 
 
 def can_access_lesson(db: Session, user_id: int, lesson: Lesson) -> bool:
-    if lesson.order == 1: 
-        return True 
+    if lesson.order == 1:
+        return True
 
-    prev_lesson = ( 
+    prev_lesson = (
         db.query(Lesson)
-        .filter( 
-            Lesson.level_id == lesson.level_id, 
-            Lesson.oreder == lesson.order - 1
+        .filter(
+            Lesson.level_id == lesson.level_id,
+            Lesson.order == lesson.order - 1
         )
         .first()
     )
 
-    if not prev_lesson: 
-        return True 
+    if not prev_lesson:
+        return True
 
-    progress = ( 
+    progress = (
         db.query(UserLessonProgress)
         .filter_by(user_id=user_id, lesson_id=prev_lesson.id, completed=True)
         .first()
@@ -27,3 +27,18 @@ def can_access_lesson(db: Session, user_id: int, lesson: Lesson) -> bool:
     )
 
     return progress is not None
+
+# user_id -> bool
+_premium_users = set()
+
+def is_premium(user_id: int) -> bool:
+    """Check if a user has premium access."""
+    return user_id in _premium_users
+
+def enable_premium(user_id: int):
+    """Enable premium access for a user."""
+    _premium_users.add(user_id)
+
+def disable_premium(user_id: int):
+    """Disable premium access for a user."""
+    _premium_users.discard(user_id)

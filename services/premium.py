@@ -18,5 +18,13 @@ def check_premium(user):
 
     return True
 
-    if not user.is_premium:
-        show_ad = True
+# Mock storage for premium users
+_premium_users = set()
+
+def is_premium(user_id: int) -> bool:
+    """Check if user_id is in premium set."""
+    return user_id in _premium_users
+
+def enable_premium(user_id: int):
+    """Add user_id to premium set."""
+    _premium_users.add(user_id)

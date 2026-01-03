@@ -1,6 +1,7 @@
 from datetime import datetime, time, timedelta 
 import time
 from services.progress import is_premium
+from services.ads import REWARD_LIVES
 
 MAX_LIVES = 6
 RESET_SECONDS = 24 * 60 * 60  # 24 часа
@@ -40,7 +41,7 @@ def use_life(user_id: int) -> bool:
     _lives[user_id]["lives"] -= 1
     return True
 
-def add_lives(user_id: int, amount: int):
+def add_lives(user_id: int, amount: int, REWARD_LIVES):
     _reset_if_needed(user_id)
     _lives[user_id]["lives"] += amount
     if _lives[user_id]["lives"] > MAX_LIVES:
