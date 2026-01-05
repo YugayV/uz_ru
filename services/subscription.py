@@ -13,5 +13,4 @@ def is_premium(user: User) -> bool:
     if user.premium_until is None:
         return False
     return user.premium_until > datetime.utcnow()
-    )
     # действуют ограничения
