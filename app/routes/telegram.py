@@ -45,6 +45,17 @@ def regen(chat_id):
 async def telegram_webhook(req: Request):
     data = await req.json()
 
+    # Safely extract chat_id from the incoming data
+    chat_id = None
+    if "message" in data:
+        chat_id = data["message"]["chat"]["id"]
+    elif "callback_query" in data:
+        chat_id = data["callback_query"]["message"]["chat"]["id"]
+
+    # If no chat_id could be determined, exit early
+    if not chat_id:
+        return {"ok": True}
+
     if "message" in data:
         chat_id = data["message"]["chat"]["id"]
 
