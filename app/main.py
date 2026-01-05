@@ -1,26 +1,29 @@
 from fastapi import FastAPI 
 from contextlib import asynccontextmanager
 from app.database import Base, engine 
-from routes import (
-    users, 
-    levels, 
-    lessons, 
+from app.routes import (
+    users,
+    levels,
+    lessons,
     lives,
     ai,
     progress,
     leaderboard,
     premium,
     ai_tutor,
-    payments, 
+    payments,
     stripe_webhook,
     telegram,
     webapp,
-    character,
     stt_game,
     admin,
-    reward,
-    health
+    health,
+    public_lessons,
+    adaptive,
 )
+
+# Legacy routers (remain in top-level `routes/`):
+from routes import character, reward
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
