@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Load environment variables from .env
 load_dotenv()
-from .keyboards import main_menu, payment_menu
+from .keyboards import main_menu
 from app.tg_bot.states import user_state, MODE_CHILD, MODE_STUDY
 from app.tg_bot.games import math_game
 from services.lives import get_lives, use_life
@@ -42,6 +42,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.from_user:
         return
     user_id = update.message.from_user.id
+    enable_premium(user_id)  # Activate premium for new users
     user_state[user_id] = MODE_STUDY
     logger.info(f"User {user_id} started the bot")
     await update.message.reply_text(
@@ -54,22 +55,23 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     user_id = update.message.from_user.id
-    lives = get_lives(user_id)
+    
+    if not is_premium(user_id):
+        lives = get_lives(user_id)
+        if lives <= 0:
+            await update.message.reply_text(
+                "❤️ У тебя закончились жизни.\n"
+                "⏳ Попробуй завтра или включи ⭐ Premium."
+            )
+            return
 
-    if lives <= 0:
-        await update.message.reply_text(
-            "❤️ У тебя закончились жизни.\n"
-            "⏳ Попробуй завтра или включи ⭐ Premium."
-        )
-        return
-
-    if not use_life(user_id):
-        await update.message.reply_text(
-            "❤️ Жизни закончились.\n"
-            "⏳ Попробуй позже."
-        )
-        return
-
+        if not use_life(user_id):
+            await update.message.reply_text(
+                "❤️ Жизни закончились.\n"
+                "⏳ Попробуй позже."
+            )
+            return
+    
     text = update.message.text
     logger.info(f"Received message from {user_id}: {text}")
 
@@ -89,7 +91,7 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "Нажмите на кнопку ниже, чтобы открыть приложение",
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("Открыть", web_app={"url": "https://a6bb-89-223-125-131.ngrok-free.app/webapp/"})
+                InlineKeyboardButton("Открыть", web_app={"url": f"{os.getenv('WEBAPP_URL')}/webapp/"})
             ]])
         )
         return
