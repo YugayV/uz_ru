@@ -85,6 +85,15 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 )
         return
 
+    if text == "📱 Открыть приложение":
+        await update.message.reply_text(
+            "Нажмите на кнопку ниже, чтобы открыть приложение",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("Открыть", web_app={"url": "https://a6bb-89-223-125-131.ngrok-free.app/webapp/"})
+            ]])
+        )
+        return
+
     if text == "📘 Учёба":
         user_state[user_id] = MODE_STUDY
         await update.message.reply_text("📘 Режим учёбы активен.")

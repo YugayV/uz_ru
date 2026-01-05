@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.database import Base
 from sqlalchemy import Date, Boolean
 
@@ -34,5 +34,6 @@ class User(Base):
     telegram_id: int
     role: str  # child | parent
     parent_id: int | None
-    
+
+   
    

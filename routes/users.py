@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.schemas.user import UserCreate, UserOut 
 from app.models.user import User 
 from app.core.deps import get_db 
+from app.services.premium import activate_premium
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -22,4 +23,8 @@ def register_user( user: UserCreate, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+
+    activate_premium(db_user)
+    db.commit()
+    
     return db_user

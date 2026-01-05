@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request
 from gtts import gTTS
 import uuid
 from app.services.limits import allowed
+from services.subscription import is_premium
 
 
 router = APIRouter(prefix="/telegram", tags=["Telegram"])
@@ -69,6 +70,12 @@ async def telegram_webhook(req: Request):
 
     if not allowed(chat_id): 
         send_voice(chat_id, "Давай отдохнём! Поиграем позже 😊")
+        
+    if is_premium(user):
+    # доступ открыт
+        else:
+    # действуют ограничения
+    
 
     return {"ok": True}
 

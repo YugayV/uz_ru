@@ -2,7 +2,7 @@ from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardBu
 
 main_menu = ReplyKeyboardMarkup(
     [
-        ["👶 Детский режим"],
+        ["👶 Детский режим", "📱 Открыть приложение"],
         ["📘 Учёба", "🎮 Игра"],
         ["🎥 Посмотреть рекламу"],
         ["⭐ Premium"]

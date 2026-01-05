@@ -19,9 +19,10 @@ from app.routes import (
     progress,
     leaderboard,
     premium,
-    ai_tutor,
     payments,
-    stripe_webhook
+    stripe_webhook,
+    telegram,
+    webapp
 )
 
 # Initialize database
@@ -48,12 +49,13 @@ app.include_router(levels.router)
 app.include_router(lessons.router)
 app.include_router(lives.router)
 app.include_router(ai.router)
-app.include_router(ai_tutor.router)
 app.include_router(progress.router)
 app.include_router(leaderboard.router)
 app.include_router(premium.router)
 app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
+app.include_router(telegram.router)
+app.include_router(webapp.router)
 
 # === SYSTEM ===
 @app.get("/")
