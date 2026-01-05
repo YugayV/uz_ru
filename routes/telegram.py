@@ -71,10 +71,12 @@ async def telegram_webhook(req: Request):
     if not allowed(chat_id): 
         send_voice(chat_id, "Давай отдохнём! Поиграем позже 😊")
         
-    if is_premium(user):
-    # доступ открыт
-        else:
-    # действуют ограничения
+    # if is_premium(user):
+    #     # доступ открыт
+    #     pass
+    # else:
+    #     # действуют ограничения
+    #     pass
     
 
     return {"ok": True}
