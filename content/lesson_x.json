@@ -1,0 +1,21 @@
+{
+  "id": "en_a0_01",
+  "language": "EN",
+  "level": "A0",
+  "topic": "Greeting",
+
+  "audio": {
+    "phrase": "audio/en/a0/hello.mp3"
+  },
+
+  "image": "images/en/a0/hello.png",
+
+  "practice": {
+    "type": "repeat_voice"
+  },
+
+  "reward": {
+    "xp": 10,
+    "coins": 5
+  }
+}
