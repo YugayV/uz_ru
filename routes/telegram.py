@@ -5,6 +5,11 @@ from gtts import gTTS
 import uuid
 from app.services.limits import allowed
 from services.subscription import is_premium
+from services.premium import activate_premium
+from models.user import User
+from core.deps import get_db
+from sqlalchemy.orm import Session
+from fastapi import Depends
 
 
 router = APIRouter(prefix="/telegram", tags=["Telegram"])
@@ -29,11 +34,20 @@ def send_voice(chat_id, text, lang="ru"):
 
 
 @router.post("/webhook")
-async def telegram_webhook(req: Request):
+async def telegram_webhook(req: Request, db: Session = Depends(get_db)):
     data = await req.json()
 
     if "message" in data:
         chat_id = data["message"]["chat"]["id"]
+        user = db.query(User).filter(User.telegram_id == chat_id).first()
+        if not user:
+            # This is a new user, create a user record and give premium
+            user = User(telegram_id=chat_id)
+            db.add(user)
+            db.commit()
+            activate_premium(user)
+            db.commit()
+
 
         # старт — сразу игра
         requests.post(
@@ -70,7 +84,8 @@ async def telegram_webhook(req: Request):
 
     if not allowed(chat_id): 
         send_voice(chat_id, "Давай отдохнём! Поиграем позже 😊")
-        
+        return {"ok": True}
+
     # if is_premium(user):
     #     # доступ открыт
     #     pass
