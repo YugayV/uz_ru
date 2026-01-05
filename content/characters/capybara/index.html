@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Capy — Mini App</title>
+  </head>
+  <body style="font-family: sans-serif; text-align:center; padding: 20px;">
+    <h1>Capy 🦫</h1>
+    <img id="capy-img" src="capybara_happy.svg" alt="capy" style="width:60%" />
+    <div>
+      <button id="play">🎧 Послушать похвалу</button>
+      <button id="encourage">🤗 Поддержать</button>
+    </div>
+    <p id="phrase" style="font-size: 1.2em; margin-top: 20px"></p>
+
+    <script>
+      async function load(){
+        const res = await fetch('/character/capybara');
+        const data = await res.json();
+        window.CAP = data;
+        document.getElementById('capy-img').src = '/static/' + data.emotions.happy.image;
+      }
+      load();
+
+      document.getElementById('play').addEventListener('click', async ()=>{
+        const data = window.CAP;
+        const audio = new Audio('/static/'+ data.emotions.happy.audio);
+        audio.play();
+        document.getElementById('phrase').textContent = data.emotions.happy.phrases[0];
+      });
+
+      document.getElementById('encourage').addEventListener('click', async ()=>{
+        const data = window.CAP;
+        const audio = new Audio('/static/'+ data.emotions.encourage.audio);
+        audio.play();
+        document.getElementById('phrase').textContent = data.emotions.encourage.phrases[0];
+      });
+    </script>
+  </body>
+</html>

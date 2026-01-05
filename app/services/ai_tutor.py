@@ -93,3 +93,30 @@ def ask_ai(question: str, mode: str = "study", native_language: str = "RU", lear
     except Exception as e:
         print(f"AI error: {e}")
         return "⚠️ Ошибка связи с AI. Попробуйте позже."
+
+
+# --- Tutor wrapper using DeepSeek and the tutor prompt ---
+from app.services.tutor_prompt import build_tutor_prompt
+from services.deepseek_client import ask_deepseek
+
+
+def tutor_reply(
+    age_group: str,
+    language_pair: str,
+    level: int,
+    lesson_title: str,
+    user_input: str | None = None
+) -> str:
+    prompt = build_tutor_prompt(
+        age_group=age_group,
+        language_pair=language_pair,
+        level=level,
+        lesson_title=lesson_title,
+        user_input=user_input
+    )
+
+    try:
+        return ask_deepseek(prompt)
+    except Exception as e:
+        print(f"Tutor DeepSeek error: {e}")
+        return "⚠️ Ошибка связи с AI. Попробуйте позже."

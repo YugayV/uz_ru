@@ -28,6 +28,8 @@ class User(Base):
 
     streak = Column(Integer, default=0)
     points = Column(Integer, default=0)
+    xp = Column(Integer, default=0)
+    total_days = Column(Integer, default=0)
     last_activity_date = Column(Date, default=None)
 
     

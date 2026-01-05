@@ -1,0 +1,32 @@
+{
+  "id": "capybara",
+  "name": "Capybara",
+  "emotions": {
+    "happy": {
+      "image": "characters/capybara/capybara_happy.svg",
+      "audio": "characters/capybara/audio/happy.mp3",
+      "phrases": [
+        "Молодец! Отлично!",
+        "Ты справился! Отличная работа!",
+        "Ух ты, как круто!"
+      ]
+    },
+    "encourage": {
+      "image": "characters/capybara/capybara_happy.svg",
+      "audio": "characters/capybara/audio/encourage.mp3",
+      "phrases": [
+        "Супер, попробуй ещё раз!",
+        "Не переживай, у тебя получится!",
+        "Давай попробуем ещё раз вместе"
+      ]
+    },
+    "sad": {
+      "image": "characters/capybara/capybara_sad.svg",
+      "audio": "characters/capybara/audio/sad.mp3",
+      "phrases": [
+        "Всё в порядке, тренировка — это весело!",
+        "Мне грустно, что не получилось, но ты можешь попробовать снова"
+      ]
+    }
+  }
+}

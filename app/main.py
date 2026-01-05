@@ -13,7 +13,12 @@ from routes import (
     payments, 
     stripe_webhook,
     telegram,
-    webapp
+    webapp,
+    character,
+    stt_game,
+    admin,
+    reward,
+    health
 )
 
 Base.metadata.create_all(bind=engine)
@@ -22,6 +27,17 @@ app = FastAPI(
     title='AI Language Learning Platform', 
     version='0.3.0'
 )
+
+# Attach simple rate-limiting middleware (placeholder for Redis-based limiter)
+from app.middleware import SimpleRateLimitMiddleware
+app.add_middleware(SimpleRateLimitMiddleware)
+
+
+# Serve `content/` as static files under `/static`
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+CONTENT_DIR = Path(__file__).resolve().parents[1] / "content"
+app.mount("/static", StaticFiles(directory=str(CONTENT_DIR)), name="static")
 
 app.include_router(users.router)
 app.include_router(levels.router)
@@ -36,6 +52,13 @@ app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
 app.include_router(telegram.router)
 app.include_router(webapp.router)
+app.include_router(character.router)
+app.include_router(stt_game.router)
+app.include_router(admin.router)
+app.include_router(reward.router)
+app.include_router(public_lessons.router)
+app.include_router(adaptive.router)
+app.include_router(health.router)
 
 
 @app.get('/')

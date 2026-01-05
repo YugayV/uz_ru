@@ -12,3 +12,4 @@ gTTS
 pydub
 SpeechRecognition
 vocab
+requests

@@ -18,4 +18,17 @@
     "xp": 10,
     "coins": 5
   }
+} 
+
+{
+  "id": "en_a0_01",
+  "language": "EN",
+  "expected_answer": "hello",
+  "audio": {
+    "phrase": "audio/en/a0/hello.mp3"
+  },
+  "image": "images/en/a0/hello.png",
+  "practice": {
+    "type": "repeat_voice"
+  }
 }

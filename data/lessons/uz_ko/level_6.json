@@ -1,0 +1,172 @@
+[
+  {
+    "id": "uz_ko_6_1",
+    "language": "uz_ko",
+    "level": 6,
+    "title": "Lesson 1",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "uz_ko_6_2",
+    "language": "uz_ko",
+    "level": 6,
+    "title": "Lesson 2",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "uz_ko_6_3",
+    "language": "uz_ko",
+    "level": 6,
+    "title": "Lesson 3",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "uz_ko_6_4",
+    "language": "uz_ko",
+    "level": 6,
+    "title": "Lesson 4",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "uz_ko_6_5",
+    "language": "uz_ko",
+    "level": 6,
+    "title": "Lesson 5",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "uz_ko_6_6",
+    "language": "uz_ko",
+    "level": 6,
+    "title": "Lesson 6",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "uz_ko_6_7",
+    "language": "uz_ko",
+    "level": 6,
+    "title": "Lesson 7",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "uz_ko_6_8",
+    "language": "uz_ko",
+    "level": 6,
+    "title": "Lesson 8",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "uz_ko_6_9",
+    "language": "uz_ko",
+    "level": 6,
+    "title": "Lesson 9",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "uz_ko_6_10",
+    "language": "uz_ko",
+    "level": 6,
+    "title": "Lesson 10",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  }
+]

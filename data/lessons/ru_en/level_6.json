@@ -1,0 +1,172 @@
+[
+  {
+    "id": "ru_en_6_1",
+    "language": "ru_en",
+    "level": 6,
+    "title": "Lesson 1",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "ru_en_6_2",
+    "language": "ru_en",
+    "level": 6,
+    "title": "Lesson 2",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "ru_en_6_3",
+    "language": "ru_en",
+    "level": 6,
+    "title": "Lesson 3",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "ru_en_6_4",
+    "language": "ru_en",
+    "level": 6,
+    "title": "Lesson 4",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "ru_en_6_5",
+    "language": "ru_en",
+    "level": 6,
+    "title": "Lesson 5",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "ru_en_6_6",
+    "language": "ru_en",
+    "level": 6,
+    "title": "Lesson 6",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "ru_en_6_7",
+    "language": "ru_en",
+    "level": 6,
+    "title": "Lesson 7",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "ru_en_6_8",
+    "language": "ru_en",
+    "level": 6,
+    "title": "Lesson 8",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "ru_en_6_9",
+    "language": "ru_en",
+    "level": 6,
+    "title": "Lesson 9",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  },
+  {
+    "id": "ru_en_6_10",
+    "language": "ru_en",
+    "level": 6,
+    "title": "Lesson 10",
+    "audio_only": true,
+    "tasks": [
+      {
+        "type": "listen",
+        "text": "Hello"
+      },
+      {
+        "type": "repeat",
+        "expected": "Hello"
+      }
+    ]
+  }
+]

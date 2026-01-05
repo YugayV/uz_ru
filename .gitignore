@@ -1,2 +1,4 @@
 .env
 ini
+# Ignore service-specific envs that may contain secrets
+services/.env

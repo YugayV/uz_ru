@@ -48,6 +48,24 @@ async def telegram_webhook(req: Request, db: Session = Depends(get_db)):
             activate_premium(user)
             db.commit()
 
+        # If user sent a voice message, save it and ask for expected phrase to verify
+        if "voice" in data["message"]:
+            file_id = data["message"]["voice"]["file_id"]
+            # get file path
+            file_info = requests.get(f"{TG_API}/getFile?file_id={file_id}").json()
+            file_path = file_info.get("result", {}).get("file_path")
+            if file_path:
+                file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+                filename = f"/tmp/{file_id}.oga"
+                r = requests.get(file_url)
+                with open(filename, "wb") as fh:
+                    fh.write(r.content)
+
+                requests.post(f"{TG_API}/sendMessage", json={
+                    "chat_id": chat_id,
+                    "text": "Я получил твой голос! Отправь сейчас фразу, которую нужно проверить, в текстовом виде (или отправь голос и подпиши текст в следующем сообщении)."
+                })
+            return {"ok": True}
 
         # старт — сразу игра
         requests.post(
@@ -81,6 +99,44 @@ async def telegram_webhook(req: Request, db: Session = Depends(get_db)):
 
         ai = requests.post(BACKEND_AI_URL, json=payload).json()
         send_voice(chat_id, ai["voice_text"], lang="ru")
+
+        # Character reaction (capybara)
+        try:
+            from services.character import get_reaction
+            react = get_reaction("capybara", "correct", streak=0)
+            if react:
+                # send reaction audio if available as local file
+                audio_path = react.get("audio")
+                if audio_path and audio_path.startswith("characters/"):
+                    local = os.path.join(os.path.dirname(__file__), "..", audio_path)
+                    local = os.path.normpath(local)
+                    if os.path.exists(local):
+                        with open(local, "rb") as audio:
+                            requests.post(
+                                f"{TG_API}/sendVoice",
+                                data={"chat_id": chat_id},
+                                files={"voice": audio}
+                            )
+                    else:
+                        # fallback to TTS phrase
+                        send_voice(chat_id, react.get("phrase", "Отлично!"), lang="ru")
+                else:
+                    send_voice(chat_id, react.get("phrase", "Отлично!"), lang="ru")
+
+                # send image if available
+                img = react.get("image")
+                if img:
+                    local_img = os.path.join(os.path.dirname(__file__), "..", img)
+                    local_img = os.path.normpath(local_img)
+                    if os.path.exists(local_img):
+                        with open(local_img, "rb") as photo:
+                            requests.post(
+                                f"{TG_API}/sendPhoto",
+                                data={"chat_id": chat_id},
+                                files={"photo": photo}
+                            )
+        except Exception:
+            pass
 
     if not allowed(chat_id): 
         send_voice(chat_id, "Давай отдохнём! Поиграем позже 😊")
