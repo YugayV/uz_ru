@@ -13,3 +13,5 @@ pydub
 SpeechRecognition
 vocab
 requests
+httpx
+pytest

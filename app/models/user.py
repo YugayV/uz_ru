@@ -31,6 +31,13 @@ class User(Base):
     xp = Column(Integer, default=0)
     total_days = Column(Integer, default=0)
     last_activity_date = Column(Date, default=None)
-
+    
+    # Compatibility: telegram id, role and parent link
+    telegram_id = Column(Integer, nullable=True, index=True)
+    role = Column(String, default="child")  # child | parent
+    parent_id = Column(Integer, nullable=True)
+    
+    def __repr__(self):
+        return f"<User id={self.id} email={self.email} telegram={self.telegram_id} premium={self.is_premium}>"
     
    
