@@ -21,9 +21,6 @@ from routes import (
     health
 )
 
-# WARNING: This will drop all tables and recreate them on startup.
-# This is useful for development but should be removed in production.
-Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI( 
