@@ -15,6 +15,8 @@ from services.premium import is_premium, enable_premium
 from services.ai_tutor import ask_ai 
 from services.ads import can_watch_ad, register_ad_view
 from services.lives import add_lives, get_lives
+from app.tg_bot.games import get_random_game
+from services.analytics import track_event
 
 # HTTP backend for tutor (we call /ai/ask)
 import requests
@@ -49,7 +51,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 from .keyboards import main_menu
 from app.tg_bot.states import user_state, MODE_CHILD, MODE_STUDY
-from app.tg_bot.games import math_game
+from app.tg_bot.games import get_random_game
 from services.lives import get_lives, use_life
 from services.stripe_service import create_checkout
 from services.paypal_service import create_paypal_order
@@ -159,7 +161,12 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if text == "🎮 Игра":
-        game = math_game()
+        mode = user_state.get(user_id, MODE_STUDY)
+        is_kid = mode == MODE_CHILD
+        game = get_random_game(is_kid=is_kid)
+        
+        track_event(str(user_id), "game_started", {"game_name": game['question'], "is_kid": is_kid})
+
         await update.message.reply_text(f"🎲 Игра началась!\n{game['question']}")
         user_state[user_id] = ("game", str(game["answer"]))
         return
@@ -169,7 +176,11 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if isinstance(user_state.get(user_id), tuple):
         state_type, correct = user_state[user_id]
         if state_type == "game":
-            if text.strip() == correct:
+            is_correct = text.strip().lower() == correct.lower()
+            
+            track_event(str(user_id), "game_answered", {"correct_answer": correct, "user_answer": text, "is_correct": is_correct})
+
+            if is_correct:
                 await update.message.reply_text("🎉 Correct! You are smart 🦫")
             else:
                 await update.message.reply_text(f"❌ Try again! (Answer was {correct})")
