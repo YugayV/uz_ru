@@ -39,3 +39,9 @@ def get_lessons_by_level(level_id: int, db: Session = Depends(get_db)):
     db.add(lesson)
     db.commit()
 
+@router.get("/lesson/{lang}/{level}/{num}")
+def get_lesson(lang: str, level: str, num: int):
+    with open(f"content/{lang}/{level}/lesson_{num}.json") as f:
+        return json.load(f)
+
+

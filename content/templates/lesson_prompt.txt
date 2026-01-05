@@ -1,0 +1,54 @@
+You are an AI language teacher.
+
+Create ONE lesson in JSON format.
+
+Target:
+- Learners: beginners
+- Source languages: Russian and Uzbek
+- Target language: {{TARGET_LANGUAGE}}
+- Level: {{LEVEL}}
+- Topic: {{TOPIC}}
+- Lesson number: {{LESSON_NUMBER}}
+
+Rules:
+- Simple words
+- No slang
+- For kids 5–10 years
+- Text must be minimal
+- Prefer audio-based learning
+
+JSON schema:
+
+{
+  "id": "{{LANG}}_{{LEVEL}}_{{LESSON_NUMBER}}",
+  "language": "{{LANG}}",
+  "level": "{{LEVEL}}",
+  "topic": "{{TOPIC}}",
+  "lesson_number": {{LESSON_NUMBER}},
+
+  "input": {
+    "audio": true,
+    "image": true,
+    "text": false
+  },
+
+  "content": {
+    "phrase": "",
+    "translation_ru": "",
+    "translation_uz": ""
+  },
+
+  "practice": [
+    {
+      "type": "repeat",
+      "answer": ""
+    }
+  ],
+
+  "game": "match_sound",
+
+  "reward": {
+    "xp": 10,
+    "coins": 5
+  }
+}
