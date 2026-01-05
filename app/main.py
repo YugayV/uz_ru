@@ -1,5 +1,6 @@
 from fastapi import FastAPI 
-from database import Base, engine 
+from contextlib import asynccontextmanager
+from app.database import Base, engine 
 from routes import (
     users, 
     levels, 
@@ -21,11 +22,35 @@ from routes import (
     health
 )
 
-Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan context manager. Runs on startup and shutdown.
+    """
+    print("🚀 AI Language Platform API is starting...")
+    print("--- DEVELOPMENT: Resetting database ---")
+    try:
+        # Import all models to ensure they are registered with Base
+        from app.models import user, lesson, level, progress, ai_usage, kid_profile
+        
+        Base.metadata.drop_all(bind=engine)
+        print("Tables dropped.")
+        Base.metadata.create_all(bind=engine)
+        print("Tables recreated successfully.")
+    except Exception as e:
+        print(f"!!! DB RESET FAILED: {e}")
+    
+    yield
+    
+    print("🛑 AI Language Platform API is shutting down...")
+
+
+# Base.metadata.create_all(bind=engine) # This is now handled in lifespan
 
 app = FastAPI( 
-    title='AI Language Learning Platform', 
-    version='0.3.0'
+    title='AI Language Platform', 
+    version='0.3.0',
+    lifespan=lifespan
 )
 
 # Attach simple rate-limiting middleware (placeholder for Redis-based limiter)
