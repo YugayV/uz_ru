@@ -1,13 +1,20 @@
 from fastapi import FastAPI 
 from database import Base, engine 
-from routes import users, levels, lessons, lives
-from routes import ai
-from routes import progress
-from routes import leaderboard
-from routes import premium
-from routes import ai_tutor
-from routes import payments, stripe_webhook
-from routes import telegram
+from routes import (
+    users, 
+    levels, 
+    lessons, 
+    lives,
+    ai,
+    progress,
+    leaderboard,
+    premium,
+    ai_tutor,
+    payments, 
+    stripe_webhook,
+    telegram,
+    webapp
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -28,6 +35,7 @@ app.include_router(ai_tutor.router)
 app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
 app.include_router(telegram.router)
+app.include_router(webapp.router)
 
 
 @app.get('/')

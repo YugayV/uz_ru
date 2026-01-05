@@ -10,19 +10,19 @@ load_dotenv()
 
 from app.database import Base, engine
 
-from app.routes import (
-    users,
-    levels,
-    lessons,
-    lives,
-    ai,
-    progress,
-    leaderboard,
-    premium,
-    payments,
-    stripe_webhook,
-    telegram,
-    webapp
+from routes import (
+    users, 
+    levels, 
+    lessons, 
+    progress, 
+    ai, 
+    lives, 
+    leaderboard, 
+    ai_tutor, 
+    premium, 
+    payments, 
+    stripe_webhook, 
+    telegram
 )
 
 # Initialize database
@@ -47,15 +47,14 @@ app = FastAPI(
 app.include_router(users.router)
 app.include_router(levels.router)
 app.include_router(lessons.router)
-app.include_router(lives.router)
-app.include_router(ai.router)
 app.include_router(progress.router)
+app.include_router(ai.router)
+app.include_router(lives.router)
 app.include_router(leaderboard.router)
 app.include_router(premium.router)
 app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
 app.include_router(telegram.router)
-app.include_router(webapp.router)
 
 # === SYSTEM ===
 @app.get("/")
