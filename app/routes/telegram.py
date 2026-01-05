@@ -8,6 +8,7 @@ from app.services.stt import speech_to_text
 from app.services.lives import LIVES
 from pydub import AudioSegment
 from datetime import datetime, timedelta
+from app.models.user import User
 
 router = APIRouter(prefix="/telegram", tags=["Telegram"])
 
