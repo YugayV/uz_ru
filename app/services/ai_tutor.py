@@ -78,7 +78,9 @@ def ask_ai(question: str, mode: str = "study", native_language: str = "RU", lear
         system_prompt += f"\nContext: This is a '{lesson_type}' lesson."
 
     try:
-        if client.api_key == "EMPTY":
+        # Re-check the key on every call to be sure
+        client.api_key = os.getenv("DEEPSEEK_API_KEY") or DEEPSEEK_API_KEY
+        if not client.api_key or client.api_key == "EMPTY":
             return "❌ API ключ DeepSeek не настроен в Railway (DEEPSEEK_API_KEY)."
             
         response = client.chat.completions.create(
