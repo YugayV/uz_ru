@@ -6,7 +6,7 @@ import uuid
 from app.services.limits import allowed
 from services.subscription import is_premium
 from services.premium import activate_premium
-from models.user import User
+from app.models.user import User
 from core.deps import get_db
 from sqlalchemy.orm import Session
 from fastapi import Depends
