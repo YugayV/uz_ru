@@ -19,7 +19,7 @@ TG_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 BACKEND_AI_URL = os.getenv("BACKEND_AI_URL", "http://localhost:8000/ai/ask")
 
 # Local AI fallback (call internal handler directly) imports
-from app.routes.ai import AIRequest, ask as _ai_ask_endpoint
+# Use lazy imports inside handlers to avoid import cycles
 
 # Simple session store
 from services.session import get_state, set_state, clear_state, set_expected_answer, pop_expected_answer
@@ -128,9 +128,16 @@ async def telegram_webhook(req: Request):
                     ai = resp.json()
                 except Exception:
                     try:
-                        ai = await _ai_ask_endpoint(AIRequest(**payload))
+                        from app.core.premium_guard import AIRequest, ask_ai as _ai_ask_endpoint
+                        req = AIRequest(lang_from=payload.get("language", "ru"), question=payload.get("text", ""))
+                        ai = await _ai_ask_endpoint(req)
                     except Exception:
-                        ai = {}
+                        try:
+                            from app.services.ai_tutor import ask_ai as _local_ask
+                            ans = _local_ask(payload.get("text", ""), mode=payload.get("mode", "study"), base_language=payload.get("language", "RU"), age=payload.get("age"))
+                            ai = {"answer": ans, "voice_text": ans}
+                        except Exception:
+                            ai = {}
                 voice_text = ai.get("voice_text") or ai.get("reply") or ai.get("answer") or ""
                 send_voice(chat_id, voice_text, lang="ru")
             return {"ok": True}
@@ -226,10 +233,16 @@ async def telegram_webhook(req: Request):
                 ai = resp.json()
             except Exception:
                 try:
-                    ai = await _ai_ask_endpoint(AIRequest(**payload))
+                    from app.core.premium_guard import AIRequest, ask_ai as _ai_ask_endpoint
+                    req = AIRequest(lang_from=payload.get("language", "ru"), question=payload.get("text", ""))
+                    ai = await _ai_ask_endpoint(req)
                 except Exception:
-                    ai = {}
-
+                    try:
+                        from app.services.ai_tutor import ask_ai as _local_ask
+                        ans = _local_ask(payload.get("text", ""), mode=payload.get("mode", "study"), base_language=payload.get("language", "RU"), age=payload.get("age"))
+                        ai = {"answer": ans, "voice_text": ans}
+                    except Exception:
+                        ai = {}
             # 4. TTS
             voice_text = ai.get("voice_text") or ai.get("reply") or ai.get("answer") or ""
             send_voice(chat_id, voice_text, lang="ru")

@@ -1,7 +1,7 @@
 {
   "id": "game_003",
-  "type": "association",
-  "question": "Какое слово связано с ""еда""?",
+  "type": "associations",
+  "question": "Какое слово связано с едой?",
   "options": ["молоко", "дом", "книга"],
   "answer": "молоко",
   "image": "games/assets/game_003.svg"

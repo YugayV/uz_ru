@@ -1,0 +1,51 @@
+name: Game JSON schema check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  games-schema:
+    name: Run game JSON schema tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest
+
+      - name: Run game JSON schema test
+        run: pytest -q tests/test_games_json_schema.py
+
+  generate-and-validate:
+    name: Run generator and validate generated games
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest
+
+      - name: Run generator script
+        run: python content/games/generate_games.py
+
+      - name: Validate generated manifests and loader
+        run: pytest -q tests/test_games_json_schema.py tests/test_games_loader.py
