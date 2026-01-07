@@ -4,11 +4,15 @@ import os
 
 # Initialize client safely to prevent startup crashes
 def get_deepseek_client():
-    key = DEEPSEEK_API_KEY or os.getenv("DEEPSEEK_API_KEY") or "EMPTY"
-    return OpenAI(
-        api_key=key,
-        base_url="https://api.deepseek.com"
+    # Robustly get the key from multiple possible env vars
+    key = (
+        os.getenv("DEEPSEEK_API_KEY")
+        or os.getenv("DEEPSEEK_KEY")
+        or DEEPSEEK_API_KEY
+        or "EMPTY"
     )
+    return OpenAI(api_key=key, base_url="https://api.deepseek.com")
+
 
 client = get_deepseek_client()
 
@@ -78,11 +82,15 @@ def ask_ai(question: str, mode: str = "study", native_language: str = "RU", lear
         system_prompt += f"\nContext: This is a '{lesson_type}' lesson."
 
     try:
-        # Re-check the key on every call to be sure
-        client.api_key = os.getenv("DEEPSEEK_API_KEY") or DEEPSEEK_API_KEY
+        # Re-check the key on every call to be sure it's fresh
+        client.api_key = (
+            os.getenv("DEEPSEEK_API_KEY")
+            or os.getenv("DEEPSEEK_KEY")
+            or DEEPSEEK_API_KEY
+        )
         if not client.api_key or client.api_key == "EMPTY":
-            return "❌ API ключ DeepSeek не настроен в Railway (DEEPSEEK_API_KEY)."
-            
+            return "❌ API-ключ DeepSeek не настроен. Проверьте переменную DEEPSEEK_API_KEY в Railway."
+
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[
