@@ -1,0 +1,8 @@
+{
+  "id": "game_033",
+  "type": "associations",
+  "question": "Что связано с морем: Ракушка, Сковорода, Тапочки",
+  "options": ["Ракушка", "Сковорода", "Тапочки"],
+  "answer": "Ракушка",
+  "image": "games/assets/game_033.svg"
+}

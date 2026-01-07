@@ -42,7 +42,8 @@ def ask_ai_tutor(user_id: int, question: str, db: Session = Depends(get_db)):
         db.commit()
 
     return { 
-        'answer': answer, 
+        'answer': answer,
+        'voice_text': answer,
         "remaining_requests": ( 
             'unlimited' if user.is_premium else FREE_LIMIT - user.ai_requests_today
         )

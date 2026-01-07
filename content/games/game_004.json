@@ -1,0 +1,8 @@
+{
+  "id": "game_004",
+  "type": "quiz",
+  "question": "Что это? (покажите картинку)",
+  "options": ["лес", "река", "гора"],
+  "answer": "гора",
+  "image": "games/assets/game_004.svg"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "game_021",
+  "type": "associations",
+  "question": "Что связано с погодой: Зонт, Хлеб, Книга",
+  "options": ["Зонт", "Хлеб", "Книга"],
+  "answer": "Зонт",
+  "image": "games/assets/game_021.svg"
+}

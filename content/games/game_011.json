@@ -1,0 +1,8 @@
+{
+  "id": "game_011",
+  "type": "guess_word",
+  "question": "Угадай животное: _ _ _ _ ",
+  "options": null,
+  "answer": "тигр",
+  "image": "games/assets/game_011.svg"
+}

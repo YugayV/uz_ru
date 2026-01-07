@@ -1,45 +1,76 @@
 import random
+import os
+from pathlib import Path
 
-def math_game():
-    return {
-        "question": "🦫 What is 2 + 2?",
-        "answer": "4"
-    }
+ASSETS_DIR = Path(__file__).resolve().parents[1] / "content" / "games"
+ASSETS_DIR.mkdir(exist_ok=True)
 
-def kids_riddle_game():
-    riddles = [
-        {"question": "I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?", "answer": "A map"},
-        {"question": "What has to be broken before you can use it?", "answer": "An egg"},
-        {"question": "What is full of holes but still holds water?", "answer": "A sponge"},
+# Basic templates for games. Each game returns a dict with keys:
+# {id, type, question, options, answer, image (optional)}
+
+def _simple_guess_word(idx: int, lang: str = "ru"):
+    templates = [
+        {"question": "Угадай животное: _ _ a _ _ _ a", "answer": "кабан"},
+        {"question": "Угадай фрукт: _ п п _ е", "answer": "яблоко"},
+        {"question": "Угадай цвет: _ л у _", "answer": "синий"},
     ]
-    return random.choice(riddles)
+    t = random.choice(templates)
+    return {"id": f"guess_word_{idx}", "type": "guess_word", "question": t["question"], "answer": t["answer"], "image": None}
 
-def adult_logic_game():
-    questions = [
-        {"question": "A man is looking at a portrait. Someone asks him whose portrait he is looking at. He replies, 'Brothers and sisters I have none, but that man's father is my father's son.' Who is in the portrait?", "answer": "His son"},
-        {"question": "What is special about these words: 'Job', 'Polish', 'Herb'?", "answer": "They are capitalized"},
-        {"question": "What comes once in a minute, twice in a moment, but never in a thousand years?", "answer": "The letter M"},
+
+def _associations(idx: int):
+    items = [
+        {"question": "Что не подходит: Яблоко, Банан, Морковь, Апельсин", "answer": "Морковь"},
+        {"question": "Что не подходит: Бег, Плавание, Сон, Полёт", "answer": "Сон"},
     ]
-    return random.choice(questions)
+    t = random.choice(items)
+    return {"id": f"assoc_{idx}", "type": "associations", "question": t["question"], "answer": t["answer"], "image": None}
 
-def guess_word_game():
-    words = [
-        {"question": "What animal is this: `E _ e _ _ a _ t`?", "answer": "Elephant"},
-        {"question": "What fruit is this: `_ p p _ e`?", "answer": "Apple"},
-        {"question": "What color is this: `_ l u _`?", "answer": "Blue"},
+
+def _memory(idx: int):
+    # Simple matching pairs generated on the fly
+    pairs = [
+        ("cat", "кот"),
+        ("dog", "собака"),
+        ("sun", "солнце"),
     ]
-    return random.choice(words)
+    return {"id": f"memory_{idx}", "type": "memory", "question": "Найди пару для слова", "pairs": pairs, "answer": None, "image": None}
 
-def associations_game():
-    options = [
-        {"question": "Which word doesn't belong? `Apple`, `Banana`, `Carrot`, `Orange`", "answer": "Carrot"},
-        {"question": "Which word doesn't belong? `Run`, `Swim`, `Fly`, `Sleep`", "answer": "Sleep"},
-        {"question": "Which word doesn't belong? `Dog`, `Cat`, `Table`, `Hamster`", "answer": "Table"},
-    ]
-    return random.choice(options)
 
-def get_random_game(is_kid=True):
-    if is_kid:
-        return random.choice([math_game, kids_riddle_game, guess_word_game])()
-    else:
-        return random.choice([adult_logic_game, associations_game])()
+def _quiz(idx: int):
+    q = {"question": "Сколько будет 2+2?", "options": ["3", "4", "5"], "answer": "4"}
+    return {"id": f"quiz_{idx}", "type": "quiz", "question": q["question"], "options": q["options"], "answer": q["answer"], "image": None}
+
+
+def generate_games(count: int = 50, is_kid: bool = True, lang: str = "ru"):
+    games = []
+    for i in range(count):
+        t = random.choices([_simple_guess_word, _associations, _memory, _quiz], weights=[0.4, 0.25, 0.2, 0.15])[0]
+        games.append(t(i, lang=lang) if t == _simple_guess_word else t(i))
+    return games
+
+
+import json
+from pathlib import Path
+
+GAMES_DIR = Path(__file__).resolve().parents[1] / "content" / "games"
+
+
+def _load_games_from_disk(limit: int = 100):
+    if not GAMES_DIR.exists():
+        return None
+    games = []
+    for p in sorted(GAMES_DIR.glob('*.json')):
+        try:
+            games.append(json.loads(p.read_text(encoding='utf-8')))
+        except Exception:
+            continue
+    return games[:limit]
+
+
+def get_random_game(is_kid: bool = True, lang: str = "ru"):
+    disk = _load_games_from_disk(limit=200)
+    if disk:
+        return random.choice(disk)
+    return random.choice(generate_games(20, is_kid=is_kid, lang=lang))
+

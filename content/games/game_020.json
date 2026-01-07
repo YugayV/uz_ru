@@ -1,0 +1,8 @@
+{
+  "id": "game_020",
+  "type": "quiz",
+  "question": "Сколько ног у паука?",
+  "options": ["6", "8", "10"],
+  "answer": "8",
+  "image": "games/assets/game_020.svg"
+}

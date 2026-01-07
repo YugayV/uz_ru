@@ -1,0 +1,8 @@
+{
+  "id": "game_049",
+  "type": "quiz",
+  "question": "Что можно пить: Чай, Камень, Мыло",
+  "options": ["Чай", "Камень", "Мыло"],
+  "answer": "Чай",
+  "image": "games/assets/game_049.svg"
+}

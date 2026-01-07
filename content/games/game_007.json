@@ -1,0 +1,8 @@
+{
+  "id": "game_007",
+  "type": "association",
+  "question": "Что связано с транспортом?",
+  "options": ["самолёт", "лук", "огурец"],
+  "answer": "самолёт",
+  "image": "games/assets/game_007.svg"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "game_006",
+  "type": "quiz",
+  "question": "Что ест корова?",
+  "options": ["трава", "бетон", "пирожное"],
+  "answer": "трава",
+  "image": "games/assets/game_006.svg"
+}

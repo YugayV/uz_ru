@@ -1,0 +1,8 @@
+{
+  "id": "game_010",
+  "type": "quiz",
+  "question": "Где живёт пингвин?",
+  "options": ["в пустыне", "в Антарктиде", "в джунглях"],
+  "answer": "в Антарктиде",
+  "image": "games/assets/game_010.svg"
+}

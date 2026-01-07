@@ -1,0 +1,8 @@
+{
+  "id": "game_031",
+  "type": "quiz",
+  "question": "Что делают птицы весной?",
+  "options": ["улетают", "спят", "строят дома"],
+  "answer": "улетают",
+  "image": "games/assets/game_031.svg"
+}

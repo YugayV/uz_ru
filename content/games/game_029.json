@@ -1,0 +1,8 @@
+{
+  "id": "game_029",
+  "type": "associations",
+  "question": "Что не подходит: Лимон, Апельсин, Томат, Банан",
+  "options": ["Лимон", "Апельсин", "Томат", "Банан"],
+  "answer": "Томат",
+  "image": "games/assets/game_029.svg"
+}

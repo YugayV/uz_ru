@@ -203,6 +203,7 @@ async def ask(request: AIRequest):
         else:
             if result == "correct":
                 out.update({"reward": "star", "sound": "/static/characters/capybara/audio/encourage.mp3"})
+        out["voice_text"] = reply
         return out
 
     # fallback conversational
@@ -218,6 +219,6 @@ async def ask(request: AIRequest):
             age=request.age,
             lesson_type=request.lesson_type
         )
-        return {"answer": response}
+        return {"answer": response, "voice_text": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,0 +1,8 @@
+{
+  "id": "game_025",
+  "type": "associations",
+  "question": "Что связано со школой: Учитель, Печенье, Собака",
+  "options": ["Учитель", "Печенье", "Собака"],
+  "answer": "Учитель",
+  "image": "games/assets/game_025.svg"
+}

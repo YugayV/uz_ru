@@ -1,0 +1,8 @@
+{
+  "id": "game_048",
+  "type": "guess_word",
+  "question": "Угадай слово: _ _ _ _ _",
+  "options": null,
+  "answer": "блок",
+  "image": "games/assets/game_048.svg"
+}

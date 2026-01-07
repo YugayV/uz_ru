@@ -1,12 +1,12 @@
 <!doctype html>
-<html>
+<html lang="ru">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Capy — Mini App</title>
+    <title>Capy — Мини‑приложение</title>
   </head>
   <body style="font-family: sans-serif; text-align:center; padding: 20px;">
-    <h1>Capy 🦫</h1>
+    <h1>Капибара 🦫</h1>
     <img id="capy-img" src="capybara_happy.svg" alt="capy" style="width:60%" />
     <div>
       <button id="play">🎧 Послушать похвалу</button>
@@ -16,10 +16,18 @@
 
     <script>
       async function load(){
-        const res = await fetch('/character/capybara');
-        const data = await res.json();
-        window.CAP = data;
-        document.getElementById('capy-img').src = '/static/' + data.emotions.happy.image;
+        try{
+          const res = await fetch('/character/capybara');
+          if(!res.ok){
+            document.body.innerHTML = '<h2>Ошибка: не удалось загрузить персонажа</h2>';
+            return;
+          }
+          const data = await res.json();
+          window.CAP = data;
+          document.getElementById('capy-img').src = '/static/' + data.emotions.happy.image;
+        }catch(e){
+          document.body.innerHTML = '<h2>Ошибка сети. Попробуйте обновить страницу.</h2>';
+        }
       }
       load();
 
