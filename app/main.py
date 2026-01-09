@@ -22,8 +22,7 @@ from app.routes import (
     adaptive,
 )
 
-# Legacy routers (remain in top-level `routes/`):
-from routes import character, reward
+# Legacy routers are now removed, ensure they are migrated to app/routes if needed.
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
