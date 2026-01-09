@@ -20,12 +20,23 @@ async def telegram_webhook(req: Request):
     
     logger.info(f"Received update, bot token configured partially: {BOT_TOKEN[:4]}...{BOT_TOKEN[-4:]}")
     data = await req.json()
+    logger.info(f"Full Telegram payload: {data}")
 
     # Safely extract chat_id from the incoming data
-    chat_id = data.get("message", {}).get("chat", {}).get("id")
+    chat_id = None
+    if "message" in data:
+        chat_id = data["message"]["chat"]["id"]
+    elif "callback_query" in data:
+        chat_id = data["callback_query"]["message"]["chat"]["id"]
+    elif "my_chat_member" in data:
+        chat_id = data["my_chat_member"]["chat"]["id"]
+        logger.info(f"Bot was added to a chat or status changed. Chat ID: {chat_id}")
+        # Optionally, you can handle this event (e.g., send a welcome message)
+        # For now, we'll just acknowledge it to prevent errors.
+        return {"ok": True}
 
     if not chat_id:
-        logger.warning("No chat_id found in the incoming data")
+        logger.warning(f"Could not extract chat_id from payload: {data}")
         return {"ok": False, "error": "chat_id not found"}
 
     # ...existing code for handling the webhook...
