@@ -48,12 +48,6 @@ app.include_router(users.router)
 app.include_router(levels.router)
 app.include_router(lessons.router)
 app.include_router(progress.router)
-app.include_router(ai.router)
-app.include_router(lives.router)
-app.include_router(leaderboard.router)
-app.include_router(premium.router)
-app.include_router(payments.router)
-app.include_router(stripe_webhook.router)
 app.include_router(telegram.router)
 
 # === SYSTEM ===
