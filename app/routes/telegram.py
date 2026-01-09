@@ -12,6 +12,7 @@ BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("TG_BOT_TOKEN")
 
 @router.post("/webhook")
 async def telegram_webhook(req: Request):
+    logger.info("--- TELEGRAM WEBHOOK ENDPOINT WAS HIT ---")
     # Log the token to see if it's loaded correctly
     if not BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN is not set!")
