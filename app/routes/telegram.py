@@ -7,6 +7,7 @@ from app.services.lives import LIVES
 from pydub import AudioSegment
 from datetime import datetime, timedelta
 from app.models.user import User
+import requests
 
 # Corrected imports to point inside `app`
 from app.services.session import get_state, set_state, clear_state, set_expected_answer, pop_expected_answer
@@ -45,15 +46,51 @@ async def telegram_webhook(req: Request):
 
         if not chat_id:
             logger.warning(f"Could not extract chat_id from payload: {data}")
-            return {"ok": False, "error": "chat_id not found"}
+            return {"ok": True} # Return OK to prevent Telegram from resending
+
+        logger.info(f"Successfully extracted chat_id: {chat_id}")
+
+        # --- Message type routing ---
+        if "message" in data:
+            logger.info("Processing a 'message' update.")
+            message = data["message"]
+            
+            # Handle /start command or simple text
+            if "text" in message:
+                text = message["text"]
+                logger.info(f"Message text: {text}")
+                if text == "/start":
+                    logger.info("Sending language selection keyboard for /start command.")
+                    keyboard = {"inline_keyboard": [[
+                        {"text": "UZ 🇺🇿", "callback_data": "lang:UZ"},
+                        {"text": "RU 🇷🇺", "callback_data": "lang:RU"},
+                        {"text": "EN 🇬🇧", "callback_data": "lang:EN"},
+                        {"text": "KOR 🇰🇷", "callback_data": "lang:KOR"}
+                    ]]}
+                    payload = {
+                        "chat_id": chat_id,
+                        "text": "Tilni tanlang / Выберите язык:",
+                        "reply_markup": keyboard
+                    }
+                    requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json=payload)
+                    logger.info("Language keyboard sent.")
+            
+            elif "voice" in message:
+                logger.info("Voice message detected, will be processed later.")
+                # The voice processing logic is already below, just logging here
+                pass
+
+        elif "callback_query" in data:
+            logger.info("Processing a 'callback_query' update.")
+            # The callback logic is already below, just logging here
+            pass
         
-        # ... (rest of the webhook logic) ...
+        # ... (rest of the webhook logic from the original file)
 
     except Exception as e:
         logger.exception(f"An unexpected error occurred in telegram_webhook: {e}")
-        return {"ok": False, "error": "An internal error occurred"}
-
-
+        return {"ok": True, "error": "An internal error occurred"} # Return OK to prevent resend
+    
     if "callback_query" in data:
         cb = data["callback_query"]["data"]
         logger.info(f"Callback query received: {cb}")
@@ -129,4 +166,5 @@ async def telegram_webhook(req: Request):
         # Here you can add code to handle regular voice messages
         # For example, save the voice message, transcribe it, etc.
 
+    logger.info("Webhook processing finished.")
     return {"ok": True}
