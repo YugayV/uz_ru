@@ -2,7 +2,9 @@ import random
 import os
 from pathlib import Path
 
-ASSETS_DIR = Path(__file__).resolve().parents[1] / "content" / "games"
+# Path to the project root
+ROOT_DIR = Path(__file__).resolve().parents[2]
+ASSETS_DIR = ROOT_DIR / "content" / "games"
 ASSETS_DIR.mkdir(exist_ok=True)
 
 # Basic templates for games. Each game returns a dict with keys:
