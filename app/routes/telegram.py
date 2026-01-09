@@ -123,25 +123,57 @@ async def telegram_webhook(req: Request):
             elif cb_data.startswith("mode:"):
                 mode = cb_data.split(":", 1)[1]
                 set_state(chat_id, mode=mode)
-                if mode == "child":
+                
+                # --- NEW: Visual Menu ---
+                state = get_state(chat_id)
+                lang = (state or {}).get("language", "RU").lower()
+                
+                # Define texts based on language
+                texts = {
+                    "ru": {"caption": "Чем займёмся?", "games": "Игры 🎲", "lessons": "Уроки 📚", "practice": "Практика 🗣️"},
+                    "uz": {"caption": "Nima qilamiz?", "games": "O'yinlar 🎲", "lessons": "Darslar 📚", "practice": "Amaliyot 🗣️"},
+                    "en": {"caption": "What should we do?", "games": "Games 🎲", "lessons": "Lessons 📚", "practice": "Practice 🗣️"}
+                }
+                menu_texts = texts.get(lang, texts["ru"])
+
+                # Send a photo with a caption and inline keyboard
+                photo_url = "https://i.imgur.com/your_image_placeholder.jpg" # Placeholder image
+                keyboard = {"inline_keyboard": [[
+                    {"text": menu_texts["games"], "callback_data": "activity:games"},
+                    {"text": menu_texts["lessons"], "callback_data": "activity:lessons"},
+                    {"text": menu_texts["practice"], "callback_data": "activity:practice"},
+                ]]}
+                
+                payload = {
+                    "chat_id": chat_id,
+                    "photo": photo_url,
+                    "caption": menu_texts["caption"],
+                    "reply_markup": keyboard
+                }
+                requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto", json=payload)
+
+            elif cb_data.startswith("activity:"):
+                activity = cb_data.split(":", 1)[1]
+                if activity == "games":
+                    # Logic to start a game (from previous version)
                     state = get_state(chat_id)
                     lang = (state or {}).get("language", "ru")
                     game = get_random_game(is_kid=True, lang=lang)
                     set_state(chat_id, current_game=game)
 
                     question = game.get("question", "Давай играть!")
-                    send_voice(chat_id, question, lang=lang.lower())
+                    send_voice(chat_id, question, lang=lang.lower()) # Audio for exercise
 
                     if game.get("options"):
                         keyboard = {"inline_keyboard": [[{"text": opt, "callback_data": f"game_answer:{i}"} for i, opt in enumerate(game["options"])]]}
                         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": chat_id, "text": "Выбери правильный ответ:", "reply_markup": keyboard})
                     set_expected_answer(chat_id, str(game.get("answer")))
-                
-                else: # Adult mode
-                    # This is where premium checks would go
-                    from app.services.ai_tutor import ask_ai
-                    response = ask_ai("Начнем урок.", mode="adult", base_language="RU")
-                    send_voice(chat_id, response, lang="ru")
+                # Placeholder for other activities
+                elif activity == "lessons":
+                    requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": chat_id, "text": "Раздел 'Уроки' в разработке."})
+                elif activity == "practice":
+                    requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": chat_id, "text": "Раздел 'Практика' в разработке."})
+
 
             elif cb_data.startswith("game_answer:"):
                 idx = int(cb_data.split(":", 1)[1])
