@@ -30,18 +30,15 @@ async def telegram_webhook(req: Request):
 
         # --- Safely extract chat_id and other relevant data ---
         chat_id = None
-        user_id = None
         message = None
         callback_query = None
 
         if "message" in data:
             message = data["message"]
             chat_id = message["chat"]["id"]
-            user_id = message["from"]["id"]
         elif "callback_query" in data:
             callback_query = data["callback_query"]
             chat_id = callback_query["message"]["chat"]["id"]
-            user_id = callback_query["from"]["id"]
         elif "my_chat_member" in data:
             logger.info(f"Bot status changed in chat: {data['my_chat_member']['chat']['id']}")
             return {"ok": True}
@@ -79,13 +76,13 @@ async def telegram_webhook(req: Request):
                     lang = (state or {}).get("language", "ru")
                     game = get_random_game(is_kid=True, lang=lang)
                     set_state(chat_id, current_game=game)
-                    # ... (TTS and game logic from previous versions)
+                    # (TTS and game logic will be handled in a subsequent step)
                 else:
-                    # ... (Adult mode logic)
+                    # (Adult mode logic with premium checks will be handled in a subsequent step)
                     pass
 
             elif cb_data.startswith("game_answer:"):
-                # ... (Game answer logic)
+                # (Game answer logic will be handled in a subsequent step)
                 pass
 
         # 2. Handle messages (text, voice, etc.)
@@ -101,7 +98,7 @@ async def telegram_webhook(req: Request):
             
             elif "voice" in message:
                 logger.info("Processing voice message.")
-                # ... (Full voice processing logic from previous versions)
+                # (Full voice processing logic will be handled in a subsequent step)
                 pass
         
         return {"ok": True}
