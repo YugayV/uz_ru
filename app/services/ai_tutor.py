@@ -107,7 +107,7 @@ def ask_ai(question: str, mode: str = "study", native_language: str = "RU", lear
 
 # --- Tutor wrapper using DeepSeek and the tutor prompt ---
 from app.services.tutor_prompt import build_tutor_prompt
-from services.deepseek_client import ask_deepseek
+from app.services.deepseek_client import ask_deepseek
 
 
 def tutor_reply(
