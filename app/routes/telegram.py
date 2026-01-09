@@ -21,58 +21,91 @@ BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("TG_BOT_TOKEN")
 @router.post("/webhook")
 async def telegram_webhook(req: Request):
     try:
-        logger.info("--- TELEGRAM WEBHOOK ENDPOINT WAS HIT ---")
-        # Log the token to see if it's loaded correctly
         if not BOT_TOKEN:
             logger.error("TELEGRAM_BOT_TOKEN is not set!")
             return {"ok": False, "error": "Bot token not configured"}
         
-        logger.info(f"Received update, bot token configured partially: {BOT_TOKEN[:4]}...{BOT_TOKEN[-4:]}")
         data = await req.json()
         logger.info(f"Full Telegram payload: {data}")
 
-        # Safely extract chat_id from the incoming data
+        # --- Safely extract chat_id and other relevant data ---
         chat_id = None
+        user_id = None
+        message = None
+        callback_query = None
+
         if "message" in data:
-            chat_id = data["message"]["chat"]["id"]
+            message = data["message"]
+            chat_id = message["chat"]["id"]
+            user_id = message["from"]["id"]
         elif "callback_query" in data:
-            chat_id = data["callback_query"]["message"]["chat"]["id"]
+            callback_query = data["callback_query"]
+            chat_id = callback_query["message"]["chat"]["id"]
+            user_id = callback_query["from"]["id"]
         elif "my_chat_member" in data:
-            chat_id = data["my_chat_member"]["chat"]["id"]
-            logger.info(f"Bot was added to a chat or status changed. Chat ID: {chat_id}")
-            # Optionally, you can handle this event (e.g., send a welcome message)
-            # For now, we'll just acknowledge it to prevent errors.
+            logger.info(f"Bot status changed in chat: {data['my_chat_member']['chat']['id']}")
             return {"ok": True}
 
         if not chat_id:
             logger.warning(f"Could not extract chat_id from payload: {data}")
-            return {"ok": True} # Return OK to prevent Telegram from resending
+            return {"ok": True}
 
-        logger.info(f"Successfully extracted chat_id: {chat_id}")
+        logger.info(f"Processing update for chat_id: {chat_id}")
 
-        # --- Message type routing ---
-        if "message" in data:
-            logger.info("Processing a 'message' update.")
-            message = data["message"]
+        # --- Handle different update types ---
+
+        # 1. Handle callback queries (button presses)
+        if callback_query:
+            cb_data = callback_query["data"]
+            logger.info(f"Processing callback_query: {cb_data}")
+
+            if cb_data.startswith("lang:"):
+                lang = cb_data.split(":", 1)[1]
+                set_state(chat_id, language=lang)
+                keyboard = {"inline_keyboard": [[{"text": str(i), "callback_data": f"level:{i}"} for i in range(1, 7)]]}
+                requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": chat_id, "text": "Выберите уровень (1-6)", "reply_markup": keyboard})
             
-            # Handle /start command or simple text
-            if "text" in message:
-                text = message["text"]
-                logger.info(f"Message text: {text}")
-                if text == "/start":
-                    logger.info("Sending language selection keyboard for /start command.")
-                    # ... (keyboard sending logic)
+            elif cb_data.startswith("level:"):
+                level = int(cb_data.split(":", 1)[1])
+                set_state(chat_id, level=level)
+                keyboard = {"inline_keyboard": [[{"text": "Детский режим", "callback_data": "mode:child"}, {"text": "Взрослый режим", "callback_data": "mode:adult"}]]}
+                requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": chat_id, "text": "Выберите режим", "reply_markup": keyboard})
+
+            elif cb_data.startswith("mode:"):
+                mode = cb_data.split(":", 1)[1]
+                set_state(chat_id, mode=mode)
+                if mode == "child":
+                    state = get_state(chat_id)
+                    lang = (state or {}).get("language", "ru")
+                    game = get_random_game(is_kid=True, lang=lang)
+                    set_state(chat_id, current_game=game)
+                    # ... (TTS and game logic from previous versions)
+                else:
+                    # ... (Adult mode logic)
+                    pass
+
+            elif cb_data.startswith("game_answer:"):
+                # ... (Game answer logic)
+                pass
+
+        # 2. Handle messages (text, voice, etc.)
+        elif message:
+            if "text" in message and message["text"] == "/start":
+                logger.info("Sending language selection keyboard for /start command.")
+                keyboard = {"inline_keyboard": [[
+                    {"text": "UZ 🇺🇿", "callback_data": "lang:UZ"},
+                    {"text": "RU 🇷🇺", "callback_data": "lang:RU"},
+                ]]}
+                payload = {"chat_id": chat_id, "text": "Tilni tanlang / Выберите язык:", "reply_markup": keyboard}
+                requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json=payload)
             
             elif "voice" in message:
-                logger.info("Voice message detected, processing now.")
-                # ... (voice processing logic)
-
-        elif "callback_query" in data:
-            logger.info("Processing a 'callback_query' update.")
-            # ... (callback query logic)
+                logger.info("Processing voice message.")
+                # ... (Full voice processing logic from previous versions)
+                pass
         
         return {"ok": True}
 
     except Exception as e:
         logger.exception(f"An unexpected error occurred in telegram_webhook: {e}")
-        return {"ok": True, "error": "An internal error occurred"} # Return OK to prevent resend
+        return {"ok": True}
