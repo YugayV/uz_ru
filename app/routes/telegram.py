@@ -8,6 +8,8 @@ from pydub import AudioSegment
 from datetime import datetime, timedelta
 from app.models.user import User
 import requests
+import uuid
+from gtts import gTTS
 
 # Corrected imports to point inside `app`
 from app.services.session import get_state, set_state, clear_state, set_expected_answer, pop_expected_answer
@@ -17,6 +19,21 @@ router = APIRouter(prefix="/telegram", tags=["Telegram"])
 logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("TG_BOT_TOKEN")
+
+def send_voice(chat_id, text, lang="ru"):
+    """Generates a voice message from text and sends it to the user."""
+    try:
+        filename = f"/tmp/{uuid.uuid4()}.mp3"
+        tts = gTTS(text=text, lang=lang)
+        tts.save(filename)
+
+        with open(filename, "rb") as audio:
+            payload = {"chat_id": chat_id}
+            files = {"voice": audio}
+            requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendVoice", data=payload, files=files)
+        os.remove(filename) # Clean up the temp file
+    except Exception as e:
+        logger.error(f"Failed to send voice message: {e}")
 
 @router.post("/webhook")
 async def telegram_webhook(req: Request):
@@ -65,8 +82,11 @@ async def telegram_webhook(req: Request):
             elif cb_data.startswith("level:"):
                 level = int(cb_data.split(":", 1)[1])
                 set_state(chat_id, level=level)
-                keyboard = {"inline_keyboard": [[{"text": "Детский режим", "callback_data": "mode:child"}, {"text": "Взрослый режим", "callback_data": "mode:adult"}]]}
-                requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": chat_id, "text": "Выберите режим", "reply_markup": keyboard})
+                keyboard = {"inline_keyboard": [[
+                    {"text": "Детский режим 🧒", "callback_data": "mode:child"},
+                    {"text": "Взрослый режим 🧑", "callback_data": "mode:adult"}
+                ]]}
+                requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": chat_id, "text": "Выберите режим:", "reply_markup": keyboard})
 
             elif cb_data.startswith("mode:"):
                 mode = cb_data.split(":", 1)[1]
@@ -76,14 +96,36 @@ async def telegram_webhook(req: Request):
                     lang = (state or {}).get("language", "ru")
                     game = get_random_game(is_kid=True, lang=lang)
                     set_state(chat_id, current_game=game)
-                    # (TTS and game logic will be handled in a subsequent step)
-                else:
-                    # (Adult mode logic with premium checks will be handled in a subsequent step)
-                    pass
+
+                    question = game.get("question", "Давай играть!")
+                    send_voice(chat_id, question, lang=lang.lower())
+
+                    if game.get("options"):
+                        keyboard = {"inline_keyboard": [[{"text": opt, "callback_data": f"game_answer:{i}"} for i, opt in enumerate(game["options"])]]}
+                        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": chat_id, "text": "Выбери правильный ответ:", "reply_markup": keyboard})
+                    set_expected_answer(chat_id, str(game.get("answer")))
+                
+                else: # Adult mode
+                    # This is where premium checks would go
+                    from app.services.ai_tutor import ask_ai
+                    response = ask_ai("Начнем урок.", mode="adult", base_language="RU")
+                    send_voice(chat_id, response, lang="ru")
 
             elif cb_data.startswith("game_answer:"):
-                # (Game answer logic will be handled in a subsequent step)
-                pass
+                idx = int(cb_data.split(":", 1)[1])
+                state = get_state(chat_id)
+                game = (state or {}).get("current_game")
+                if not game: return {"ok": True}
+
+                expected = pop_expected_answer(chat_id)
+                chosen = game.get("options", [])[idx]
+
+                from app.services.speech_utils import is_close_answer
+                if is_close_answer(chosen, expected):
+                    send_voice(chat_id, "Правильно, молодец!", lang="ru")
+                else:
+                    send_voice(chat_id, "Неверно, попробуй ещё раз.", lang="ru")
+                clear_state(chat_id) # End of game turn
 
         # 2. Handle messages (text, voice, etc.)
         elif message:
@@ -97,10 +139,41 @@ async def telegram_webhook(req: Request):
                 requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json=payload)
             
             elif "voice" in message:
-                logger.info("Processing voice message.")
-                # (Full voice processing logic will be handled in a subsequent step)
-                pass
-        
+                file_id = message["voice"]["file_id"]
+                file_info = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={file_id}").json()
+                file_path = file_info["result"]["file_path"]
+                audio_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+                audio_data = requests.get(audio_url).content
+
+                with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as ogg_file:
+                    ogg_file.write(audio_data)
+                    ogg_path = ogg_file.name
+                
+                wav_path = ogg_path.replace(".ogg", ".wav")
+                AudioSegment.from_ogg(ogg_path).export(wav_path, format="wav")
+                
+                text = speech_to_text(wav_path)
+                os.remove(ogg_path)
+                os.remove(wav_path)
+
+                if not text:
+                    send_voice(chat_id, "Я не расслышал, повтори, пожалуйста.", lang="ru")
+                    return {"ok": True}
+
+                expected = pop_expected_answer(chat_id)
+                if expected:
+                    from app.services.speech_utils import is_close_answer
+                    if is_close_answer(text, expected):
+                        send_voice(chat_id, "Отлично, всё верно!", lang="ru")
+                    else:
+                        send_voice(chat_id, "Не совсем так, давай попробуем ещё раз.", lang="ru")
+                    clear_state(chat_id)
+                else:
+                    # Fallback to AI for general conversation
+                    from app.services.ai_tutor import ask_ai
+                    response = ask_ai(text, mode="adult", base_language="RU")
+                    send_voice(chat_id, response, lang="ru")
+
         return {"ok": True}
 
     except Exception as e:
