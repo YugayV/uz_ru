@@ -24,14 +24,22 @@ def extract_json_from_markdown(text: str) -> str:
     """
     import re
     
-    # Try to find JSON in markdown code block
-    markdown_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
-    match = re.search(markdown_pattern, text, re.DOTALL)
+    # Try to find JSON in markdown code block (with or without 'json' language tag)
+    # Pattern matches: ```json\n{...}\n``` or ```\n{...}\n```
+    markdown_pattern = r'```(?:json)?\s*(\{[\s\S]*?\})\s*```'
+    match = re.search(markdown_pattern, text, re.DOTALL | re.MULTILINE)
     
     if match:
-        return match.group(1)
+        return match.group(1).strip()
     
-    # If no markdown block found, return original text
+    # If no markdown block found, try to find just the JSON object
+    json_pattern = r'(\{[\s\S]*\})'
+    json_match = re.search(json_pattern, text, re.DOTALL)
+    
+    if json_match:
+        return json_match.group(1).strip()
+    
+    # If nothing found, return original text
     return text.strip()
 
 
