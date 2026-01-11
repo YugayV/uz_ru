@@ -146,3 +146,54 @@ async def translate_text(text: str, target_language: str):
         return f"Error communicating with DeepSeek API: {e.response.status_code} - {e.response.text}"
     except Exception as e:
         return f"An unexpected error occurred: {str(e)}"
+
+# --- Image and Audio Generation ---
+
+# Using a public Hugging Face Space for free image generation
+IMAGE_GENERATION_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+# It's recommended to add your Hugging Face token to environment variables for higher limits
+HF_TOKEN = os.getenv("HF_TOKEN") 
+
+async def generate_image(prompt: str) -> str | None:
+    """
+    Generates an image from a text prompt using a Hugging Face model.
+    Returns the URL of the generated image or None if it fails.
+    """
+    if not HF_TOKEN:
+        # Fallback to a different, sometimes slower, public model if no token is provided
+        # This makes it work out-of-the-box, but having a token is better.
+        image_api_url = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
+        headers = {"Content-Type": "application/json"}
+        payload = {"inputs": f"cute cartoon, {prompt}, children's book illustration"}
+    else:
+        # Use the recommended SDXL model if a token is available
+        image_api_url = IMAGE_GENERATION_API_URL
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {HF_TOKEN}"
+        }
+        payload = {"inputs": f"cute cartoon style, {prompt}, children's book illustration, simple background, vibrant colors"}
+
+    try:
+        # The model can take a while to load, so we use a long timeout.
+        async with httpx.AsyncClient() as client:
+            response = await client.post(image_api_url, json=payload, headers=headers, timeout=120.0)
+            
+            # Check if the response is an image
+            if response.headers.get("content-type", "").startswith("image/"):
+                # We need to save the image and serve it, or upload it somewhere.
+                # For simplicity in a stateless environment, we'll convert it to a Data URL.
+                import base64
+                image_data = base64.b64encode(response.content).decode("utf-8")
+                return f"data:image/jpeg;base64,{image_data}"
+            else:
+                # The API might return an error as JSON
+                logger.error(f"Image generation API returned non-image data: {response.text}")
+                return None
+
+    except httpx.TimeoutException:
+        logger.error("Image generation timed out.")
+        return None
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during image generation: {str(e)}")
+        return None

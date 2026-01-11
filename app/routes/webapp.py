@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Request, Form
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
-from app.ai_content import generate_exercise, translate_text, generate_multiple_choice_exercise
+from app.ai_content import generate_exercise, translate_text, generate_multiple_choice_exercise, generate_image
+from gtts import gTTS
+import io
 
 # Create a new APIRouter instance
 router = APIRouter()
@@ -45,8 +47,15 @@ async def get_exercise_page(request: Request, language: str, level: str):
     Serves the main exercise page.
     This is where the AI-generated content will be displayed.
     """
-    # Generate the exercise content using the new function
+    # Generate the exercise content
     exercise_data = await generate_multiple_choice_exercise(language, level)
+    
+    image_url = None
+    # If the exercise was generated successfully, try to generate an image for it
+    if exercise_data and not exercise_data.get("error"):
+        visual_prompt = exercise_data.get("visual_prompt")
+        if visual_prompt:
+            image_url = await generate_image(visual_prompt)
 
     language_map = {
         "russian": "Rus tili",
@@ -58,7 +67,8 @@ async def get_exercise_page(request: Request, language: str, level: str):
         "intermediate": "O'rta",
         "advanced": "Yuqori"
     }
-
+, # Pass the entire exercise object
+        "image_url": image_url # Pass the generated image URL
     context = {
         "request": request,
         "language_name": language_map.get(language, language.capitalize()),
@@ -93,4 +103,25 @@ async def handle_translation(request: Request):
     }
     
     return templates.TemplateResponse("translator.html", context)
+
+@router.get("/tts")
+async def text_to_speech(text: str, lang: str = 'en'):
+    """
+    Generates an audio file from text and returns it as a streaming response.
+    """
+    try:
+        # Create a gTTS object
+        tts = gTTS(text=text, lang=lang, slow=False)
+        
+        # Save the audio to an in-memory file
+        mp3_fp = io.BytesIO()
+        tts.write_to_fp(mp3_fp)
+        mp3_fp.seek(0) # Rewind the file pointer to the beginning
+        
+        # Stream the audio file back to the client
+        return StreamingResponse(mp3_fp, media_type="audio/mpeg")
+        
+    except Exception as e:
+        logger.error(f"Failed to generate TTS audio: {e}")
+        return {"error": "Failed to generate audio"}
 

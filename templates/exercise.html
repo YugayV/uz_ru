@@ -39,6 +39,14 @@
         }
         .correct { color: #4caf50; }
         .incorrect { color: #f44336; }
+        .exercise-image {
+            max-width: 100%;
+            height: auto;
+            max-height: 300px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -50,6 +58,11 @@
         <main class="exercise-area">
             {% if exercise and not exercise.error %}
             <div class="exercise-content">
+
+                {% if image_url %}
+                <img src="{{ image_url }}" alt="{{ exercise.visual_prompt }}" style="max-width: 100%; height: auto; max-height: 300px; border-radius: 12px; margin-bottom: 25px;">
+                {% endif %}
+
                 <h2 class="question">{{ exercise.question }}</h2>
                 
                 <div class="options-container" data-correct-index="{{ exercise.correct_answer_index }}">
@@ -96,15 +109,5 @@
                 button.style.borderColor = '#4caf50';
                 button.style.backgroundColor = '#e8f5e9';
             } else {
-                feedbackEl.textContent = "Noto'g'ri. Yana bir bor urinib ko'ring!";
-                feedbackEl.className = 'feedback incorrect';
-                button.style.borderColor = '#f44336';
-                button.style.backgroundColor = '#ffebee';
-                // Highlight the correct answer
-                buttons[correctIndex].style.borderColor = '#4caf50';
-                buttons[correctIndex].style.backgroundColor = '#e8f5e9';
-            }
-        }
-    </script>
-</body>
-</html>
+                feedbackEl.textContent = "Noto'g'ri. Yana bir bor
+               
