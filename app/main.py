@@ -1,3 +1,5 @@
+print("✅ [main.py] START: Script execution begins.")
+
 from fastapi import FastAPI 
 from contextlib import asynccontextmanager
 from app.database import Base, engine 
@@ -30,6 +32,7 @@ async def lifespan(app: FastAPI):
     """
     Application lifespan context manager. Runs on startup and shutdown.
     """
+    print("✅ [main.py] LIFESPAN: Startup sequence initiated.")
     print("🚀 AI Language Platform API is starting...")
     print("--- DEVELOPMENT: Resetting database ---")
     try:
@@ -43,6 +46,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"!!! DB RESET FAILED: {e}")
     
+    print("✅ [main.py] LIFESPAN: Startup sequence finished. App is running.")
     yield
     
     print("🛑 AI Language Platform API is shutting down...")
@@ -55,6 +59,7 @@ app = FastAPI(
     version='0.3.0',
     lifespan=lifespan
 )
+print("✅ [main.py] FastAPI app instance created.")
 
 # Attach simple rate-limiting middleware (placeholder for Redis-based limiter)
 from app.middleware import SimpleRateLimitMiddleware
@@ -67,6 +72,7 @@ from pathlib import Path
 CONTENT_DIR = Path(__file__).resolve().parents[1] / "content"
 app.mount("/static", StaticFiles(directory=str(CONTENT_DIR)), name="static")
 
+# Include all the routers for the application
 app.include_router(users.router)
 app.include_router(levels.router)
 app.include_router(lessons.router)
@@ -86,6 +92,8 @@ app.include_router(health.router)
 app.include_router(public_lessons.router)
 app.include_router(adaptive.router)
 app.include_router(translator.router)
+
+print("✅ [main.py] END: All routers included. App is configured.")
 
 
 @app.get('/')

@@ -1,6 +1,7 @@
 import os
 import requests
 
+print("✅ [deepseek_client.py] START: Module is being imported.")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 if not DEEPSEEK_API_KEY:

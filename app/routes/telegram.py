@@ -20,6 +20,10 @@ router = APIRouter(prefix="/telegram", tags=["Telegram"])
 logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("TG_BOT_TOKEN")
+if not BOT_TOKEN:
+    raise ValueError("🔴 CRITICAL: TELEGRAM_BOT_TOKEN environment variable not set. The application cannot start.")
+else:
+    print("✅ [telegram.py] TELEGRAM_BOT_TOKEN found.")
 
 def clean_text_for_tts(text: str) -> str:
     """Removes emojis and other non-verbal characters for cleaner TTS output."""
