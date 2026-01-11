@@ -107,3 +107,42 @@ async def generate_multiple_choice_exercise(language: str, level: str):
         return {"error": "Failed to decode JSON from the API response."}
     except Exception as e:
         return {"error": f"An unexpected error occurred: {str(e)}"}
+
+async def translate_text(text: str, target_language: str):
+    """
+    Translates text using the DeepSeek API.
+    """
+    if not DEEPSEEK_API_KEY:
+        return "Error: DEEPSEEK_API_KEY is not set. Please check your .env file."
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+    }
+
+    # A specific prompt for translation
+    prompt = f"Translate the following text to {target_language}. Provide only the translated text, without any additional explanations or context.\\n\\nText to translate: \"{text}\""
+
+    payload = {
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": "You are a powerful and accurate translator."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.2, # Lower temperature for more precise, less creative translations
+        "max_tokens": 1000,
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=45.0)
+            response.raise_for_status()
+            
+            data = response.json()
+            translation = data['choices'][0]['message']['content']
+            return translation
+
+    except httpx.HTTPStatusError as e:
+        return f"Error communicating with DeepSeek API: {e.response.status_code} - {e.response.text}"
+    except Exception as e:
+        return f"An unexpected error occurred: {str(e)}"
