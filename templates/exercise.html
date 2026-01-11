@@ -83,6 +83,8 @@
                 <p style="color: #f44336;">{{ exercise.error }}</p>
             </div>
             {% endif %}
+
+            <button id="next-exercise-btn" onclick="goToNextExercise()" style="display:none; margin-top: 20px;">Keyingi mashq →</button>
         </main>
         
         <footer>
@@ -109,5 +111,23 @@
                 button.style.borderColor = '#4caf50';
                 button.style.backgroundColor = '#e8f5e9';
             } else {
-                feedbackEl.textContent = "Noto'g'ri. Yana bir bor
-               
+                feedbackEl.textContent = "Noto'g'ri. Yana bir bor urinib ko'ring.";
+                feedbackEl.className = 'feedback incorrect';
+                button.style.borderColor = '#f44336';
+                button.style.backgroundColor = '#ffebee';
+            }
+
+            // Show the "Next Exercise" button after a delay
+            setTimeout(() => {
+                document.getElementById('next-exercise-btn').style.display = 'block';
+            }, 1000);
+        }
+
+        function goToNextExercise() {
+            // Here you would typically send a request to the server to save the progress
+            // For this example, we'll just reload the page
+            location.reload();
+        }
+    </script>
+</body>
+</html>

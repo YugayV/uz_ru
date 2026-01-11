@@ -102,6 +102,31 @@ async def get_translator_page(request: Request):
     """Serves the translator page."""
     return templates.TemplateResponse("translator.html", {"request": request, "translation_result": ""})
 
+@router.post("/mark_completed")
+async def mark_completed(request: Request):
+    """Marks the current exercise as completed for the user."""
+    session_id = request.cookies.get("session_id")
+    if not session_id:
+        return {"status": "error", "message": "No session found"}
+
+    user, _ = get_or_create_web_user(session_id)
+    
+    # We retrieve the hash from the server-side session for security
+    current_hash = request.session.get('current_exercise_hash')
+
+    if user and current_hash:
+        # This is a simplified way to pass the data to be marked.
+        # A more robust way would be to re-hash the data sent from the client.
+        mark_exercise_as_completed(user.id, {"question": current_hash}) # We pass a dummy dict with the hash's source
+        
+        # Clear the hash from the session
+        request.session.pop('current_exercise_hash', None)
+        
+        return {"status": "ok"}
+    
+    return {"status": "error", "message": "User or exercise hash not found"}
+
+
 @router.post("/translator", response_class=HTMLResponse)
 async def handle_translation(request: Request):
     """Handles the translation request."""
@@ -126,10 +151,16 @@ async def handle_translation(request: Request):
 async def text_to_speech(text: str, lang: str = 'en'):
     """
     Generates an audio file from text and returns it as a streaming response.
+    Supports 'en', 'ru', 'ko', and 'uz'.
     """
+    # gTTS doesn't officially support Uzbek ('uz'), but it can often be synthesized
+    # using the English voice model with Uzbek text. It's not perfect but works.
+    # For 'ko' and 'ru', it has dedicated support.
+    lang_to_use = lang if lang in ['en', 'ru', 'ko'] else 'en'
+    
     try:
         # Create a gTTS object
-        tts = gTTS(text=text, lang=lang, slow=False)
+        tts = gTTS(text=text, lang=lang_to_use, slow=False)
         
         # Save the audio to an in-memory file
         mp3_fp = io.BytesIO()

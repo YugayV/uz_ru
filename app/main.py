@@ -4,6 +4,7 @@ import os
 import json
 from fastapi import FastAPI 
 from contextlib import asynccontextmanager
+from starlette.middleware.sessions import SessionMiddleware # Import the session middleware
 from app.database import Base, engine 
 from app.routes import (
     users,
@@ -69,6 +70,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 print("✅ [main.py] FastAPI app instance created.")
+
+# Add session middleware. A strong, secret key is required for production.
+# This should be loaded from environment variables.
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "a-temporary-secret-key-for-dev"))
 
 # Attach simple rate-limiting middleware (placeholder for Redis-based limiter)
 from app.middleware import SimpleRateLimitMiddleware
