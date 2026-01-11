@@ -51,10 +51,6 @@ if not BOT_TOKEN:
 else:
     print("✅ [telegram.py] TELEGRAM_BOT_TOKEN found.")
 
-def clean_text_for_tts(text: str) -> str:
-    # Create a new APIRouter instance
-router = APIRouter()
-
 # Функция для очистки текста (должна быть здесь)
 def clean_text_for_tts(text: str) -> str:
     """Removes emojis and other non-verbal characters for cleaner TTS output."""
