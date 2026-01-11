@@ -181,29 +181,57 @@ async def handle_translation(request: Request):
     return templates.TemplateResponse("translator.html", context)
 
 @router.get("/tts")
+import re # Добавьте этот импорт вверху файла, если его еще нет
+
+def clean_text_for_tts(text: str) -> str:
+    """Removes emojis and other non-verbal characters for cleaner TTS output."""
+    if not isinstance(text, str):
+        return ""
+    # Regex to remove most emojis and special symbols that interfere with TTS
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F700-\U0001F77F"  # alchemical symbols
+        "]+",
+        flags=re.UNICODE,
+    )
+    cleaned_text = emoji_pattern.sub(r'', text)
+    # Remove common non-verbal characters and extra whitespace
+    cleaned_text = cleaned_text.replace("🎲", "").replace("📚", "").replace("🗣️", "").replace("🧒", "").replace("🧑", "")
+    return cleaned_text.strip()
+
+@router.get("/tts")
 async def text_to_speech(text: str, lang: str = 'en'):
     """
     Generates an audio file from text and returns it as a streaming response.
     Supports 'en', 'ru', 'ko', and 'uz'.
     """
-    # gTTS doesn't officially support Uzbek ('uz'), but it can often be synthesized
-    # using the English voice model with Uzbek text. It's not perfect but works.
-    # For 'ko' and 'ru', it has dedicated support.
     lang_to_use = lang if lang in ['en', 'ru', 'ko'] else 'en'
     
+    # Clean the text before generating audio
+    cleaned_text = clean_text_for_tts(text)
+
+    if not cleaned_text:
+        # It's better to use proper logging here
+        print("Warning: No text to speak after cleaning.")
+        return
+
     try:
-        # Create a gTTS object
-        tts = gTTS(text=text, lang=lang_to_use, slow=False)
+        # Create a gTTS object with slow=True for clearer pronunciation
+        tts = gTTS(text=cleaned_text, lang=lang_to_use, slow=True)
         
         # Save the audio to an in-memory file
         mp3_fp = io.BytesIO()
         tts.write_to_fp(mp3_fp)
-        mp3_fp.seek(0) # Rewind the file pointer to the beginning
+        mp3_fp.seek(0)
         
         # Stream the audio file back to the client
         return StreamingResponse(mp3_fp, media_type="audio/mpeg")
         
     except Exception as e:
-        logger.error(f"Failed to generate TTS audio: {e}")
-        return {"error": "Failed to generate audio"}
+        print(f"Failed to generate TTS audio: {e}")
+        # In a real app, you might return a proper error response
+        return
 
