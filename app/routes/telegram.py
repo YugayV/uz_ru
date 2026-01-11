@@ -1,7 +1,9 @@
 import logging
 import os
 import tempfile
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Form
+from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.templating import Jinja2Templates # NEW: Import Jinja2Templates
 from app.services.stt import speech_to_text
 from app.services.lives import LIVES
 from pydub import AudioSegment
