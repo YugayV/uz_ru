@@ -8,9 +8,29 @@ from app.services.session import get_or_create_web_user
 from app.services.progress import get_completed_exercise_hashes, mark_exercise_as_completed, _hash_exercise # Import progress functions
 from gtts import gTTS
 import io
+import re
 
 # Create a new APIRouter instance
 router = APIRouter()
+
+def clean_text_for_tts(text: str) -> str:
+    """Removes emojis and other non-verbal characters for cleaner TTS output."""
+    if not isinstance(text, str):
+        return ""
+    # Regex to remove most emojis and special symbols that interfere with TTS
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F700-\U0001F77F"  # alchemical symbols
+        "]+",
+        flags=re.UNICODE,
+    )
+    cleaned_text = emoji_pattern.sub(r'', text)
+    # Remove punctuation that can be misread by TTS, but keep spaces.
+    cleaned_text = re.sub(r'[^\w\s]', '', cleaned_text)
+    return cleaned_text.strip()
 
 # Set up the template directory.
 # This assumes the 'templates' directory is at the root of the project (uz_ru/templates)
@@ -182,8 +202,7 @@ async def handle_translation(request: Request):
     
     return templates.TemplateResponse("translator.html", context)
 
-@router.get("/tts")
-import re # Добавьте этот импорт вверху файла, если его еще нет
+
 
 def clean_text_for_tts(text: str) -> str:
     """Removes emojis and other non-verbal characters for cleaner TTS output."""
