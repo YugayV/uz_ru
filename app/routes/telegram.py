@@ -307,7 +307,10 @@ def send_voice(chat_id, text, lang="ru"):
             return
 
         filename = f"/tmp/{uuid.uuid4()}.mp3"
-        tts = gTTS(text=clean_text, lang=lang)
+        
+        # Use fallback for Uzbek, and slow pronunciation for clarity
+        lang_to_use = lang if lang in ['en', 'ru', 'ko'] else 'en'
+        tts = gTTS(text=clean_text, lang=lang_to_use, slow=True)
         tts.save(filename)
 
         with open(filename, "rb") as audio:
