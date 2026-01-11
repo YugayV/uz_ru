@@ -207,8 +207,12 @@ Return JSON with this structure:
             data = response.json()
             game_content = data['choices'][0]['message']['content']
             
+            # Import and use extract_json_from_markdown
+            from app.ai_content import extract_json_from_markdown
+            clean_json = extract_json_from_markdown(game_content)
+            
             try:
-                game_data = json.loads(game_content)
+                game_data = json.loads(clean_json)
                 return game_data
             except json.JSONDecodeError:
                 logger.error(f"Failed to decode JSON from DeepSeek API. Raw response: {game_content}")

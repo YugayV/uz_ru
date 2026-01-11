@@ -11,6 +11,30 @@ DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 
+def extract_json_from_markdown(text: str) -> str:
+    """
+    Extracts JSON from markdown code blocks if present.
+    DeepSeek sometimes returns JSON wrapped in ```json ... ```
+    
+    Args:
+        text: Response text that may contain markdown code blocks
+        
+    Returns:
+        Clean JSON string
+    """
+    import re
+    
+    # Try to find JSON in markdown code block
+    markdown_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
+    match = re.search(markdown_pattern, text, re.DOTALL)
+    
+    if match:
+        return match.group(1)
+    
+    # If no markdown block found, return original text
+    return text.strip()
+
+
 async def translate_text(text: str, target_language: str):
     """
     Translates text using the DeepSeek API.
@@ -141,9 +165,13 @@ async def generate_multiple_choice_exercise(learn_language: str, native_language
             
             data = response.json()
             exercise_content = data['choices'][0]['message']['content']
-            # Attempt to parse JSON; if it fails, return as error
+            
+            # Clean JSON from markdown blocks if present
+            clean_json = extract_json_from_markdown(exercise_content)
+            
+            # Attempt to parse JSON
             try:
-                exercise_data = json.loads(exercise_content)
+                exercise_data = json.loads(clean_json)
                 return exercise_data
             except json.JSONDecodeError:
                 logger.error(f"Failed to decode JSON from DeepSeek API. Raw response: {exercise_content}")
