@@ -12,6 +12,10 @@ import re
 import uuid
 from gtts import gTTS
 
+# Corrected imports to point inside `app`
+from app.services.session import get_state, set_state, clear_state, set_expected_answer, pop_expected_answer
+from app.tg_bot.games import get_random_game
+
 def set_telegram_webhook():
     """Sets the Telegram webhook to the production URL."""
     # Use PUBLIC_URL from environment, but default to the one you provided.
