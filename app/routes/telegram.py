@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("TG_BOT_TOKEN")
 if not BOT_TOKEN:
-    raise ValueError("🔴 CRITICAL: TELEGRAM_BOT_TOKEN environment variable not set. The application cannot start.")
+    # Instead of crashing, log a critical error. The webhook will fail but the app will run.
+    logger.critical("CRITICAL: TELEGRAM_BOT_TOKEN environment variable not set. Telegram bot will NOT work.")
 else:
     print("✅ [telegram.py] TELEGRAM_BOT_TOKEN found.")
 
