@@ -8,6 +8,7 @@ from pydub import AudioSegment
 from datetime import datetime, timedelta
 from app.models.user import User
 import requests
+import re
 import uuid
 from gtts import gTTS
 
@@ -20,11 +21,42 @@ logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("TG_BOT_TOKEN")
 
+def clean_text_for_tts(text: str) -> str:
+    """Removes emojis and other non-verbal characters for cleaner TTS output."""
+    if not isinstance(text, str):
+        return ""
+    # Regex to remove most emojis and special symbols
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F700-\U0001F77F"  # alchemical symbols
+        "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
+        "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
+        "\U0001F900-\U0001F9FF"  # Supplemental Symbols and Pictographs
+        "\U0001FA00-\U0001FA6F"  # Chess Symbols
+        "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
+        "\U00002702-\U000027B0"  # Dingbats
+        "\U000024C2-\U0001F251" 
+        "]+",
+        flags=re.UNICODE,
+    )
+    cleaned_text = emoji_pattern.sub(r'', text)
+    # Also remove common non-verbal characters
+    cleaned_text = cleaned_text.replace("🎲", "").replace("📚", "").replace("🗣️", "").replace("🧒", "").replace("🧑", "")
+    return cleaned_text.strip()
+
 def send_voice(chat_id, text, lang="ru"):
     """Generates a voice message from text and sends it to the user."""
     try:
+        clean_text = clean_text_for_tts(text)
+        if not clean_text:
+            logger.warning(f"Skipping TTS for empty or non-string text: {text}")
+            return
+
         filename = f"/tmp/{uuid.uuid4()}.mp3"
-        tts = gTTS(text=text, lang=lang)
+        tts = gTTS(text=clean_text, lang=lang)
         tts.save(filename)
 
         with open(filename, "rb") as audio:
