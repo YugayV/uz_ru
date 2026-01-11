@@ -3,6 +3,9 @@ import requests
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
+if not DEEPSEEK_API_KEY:
+    raise ValueError("🔴 CRITICAL: DEEPSEEK_API_KEY environment variable not set. The application cannot start.")
+
 def ask_deepseek(prompt: str):
     response = requests.post(
         "https://api.deepseek.com/chat/completions",
