@@ -24,7 +24,7 @@
             background-color: #f0f2f5;
             border-color: #3f51b5;
         }
-        .option-btn:active { /* Эффект нажатия */
+        .option-btn:active {
             transform: scale(0.98);
             background-color: #e8eaf6;
         }
@@ -42,13 +42,19 @@
         .exercise-image {
             max-width: 100%;
             height: auto;
-            max-height: 250px; /* Уменьшил максимальную высоту */
+            max-height: 250px;
             border-radius: 12px;
         }
         .image-placeholder {
             padding: 20px;
             background-color: #f0f2f5;
             border-radius: 12px;
+        }
+        .tts-icon {
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 0.9em;
+            vertical-align: middle;
         }
     </style>
 </head>
@@ -62,6 +68,7 @@
         
         <main class="exercise-area">
             <div class="image-container">
+                <!-- DEBUG: Raw image_url: {{ image_url }} -->
                 {% if image_url %}
                     <img src="{{ image_url }}" alt="Visual prompt" class="exercise-image">
                 {% else %}
@@ -73,11 +80,17 @@
 
             {% if exercise and not exercise.error %}
             <div class="exercise-content">
-                <h2 class="question">{{ exercise.question }}</h2>
+                <h2 class="question">
+                    {{ exercise.question }}
+                    <span class="tts-icon" onclick="playSound('{{ exercise.question }}', '{{ learn_language_slug }}')">🔊</span>
+                </h2>
                 
                 <div class="options-container" data-correct-index="{{ exercise.correct_answer_index }}">
                     {% for option in exercise.options %}
-                    <button class="option-btn" onclick="checkAnswer(this, {{ loop.index0 }})">{{ option }}</button>
+                    <button class="option-btn" onclick="checkAnswer(this, {{ loop.index0 }})">
+                        {{ option }}
+                        <span class="tts-icon" onclick="playSound('{{ option }}', '{{ learn_language_slug }}')">🔊</span>
+                    </button>
                     {% endfor %}
                 </div>
 
@@ -100,6 +113,11 @@
     </div>
 
     <script>
+        function playSound(text, lang) {
+            const audio = new Audio(`/tts?text=${encodeURIComponent(text)}&lang=${lang}`);
+            audio.play();
+        }
+
         function checkAnswer(button, selectedIndex) {
             const container = button.parentElement;
             const correctIndex = parseInt(container.getAttribute('data-correct-index'));
@@ -130,10 +148,20 @@
         }
 
         async function goToNextExercise() {
+            const currentUrl = new URL(window.location.href);
+            const pathParts = currentUrl.pathname.split('/');
+            const nativeLang = pathParts[2]; // /learn/native/RUSSIAN/english/beginner/animals -> RUSSIAN
+            const learnLang = pathParts[3]; // /learn/native/russian/ENGLISH/beginner/animals -> ENGLISH
+            const level = pathParts[4];
+            const topic = pathParts[5];
+
+            // Mark current exercise as completed
             await fetch('/mark_completed', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
             });
+            
+            // Reload the page to get a new exercise
             window.location.reload();
         }
     </script>

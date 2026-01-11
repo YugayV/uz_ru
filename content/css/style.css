@@ -1,0 +1,195 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2.5em;
+    color: #1a237e;
+    margin-bottom: 10px;
+}
+
+header p {
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 40px;
+}
+
+.language-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+}
+
+.language-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.language-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+}
+
+.language-card .flag {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.language-card h2 {
+    font-size: 1.5em;
+    color: #3f51b5;
+    margin-bottom: 10px;
+}
+
+.language-card p {
+    font-size: 1em;
+    color: #666;
+}
+
+/* Styles for Level Selection Page */
+.level-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.level-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 25px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: left;
+}
+
+.level-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.level-card h2 {
+    font-size: 1.8em;
+    color: #3f51b5;
+    margin: 0 0 5px 0;
+}
+
+.level-card p {
+    font-size: 1.1em;
+    color: #777;
+    margin: 0;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    color: #3f51b5;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* Styles for Translator Page */
+.translator-area {
+    width: 100%;
+}
+
+.translator-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.text-input {
+    width: 100%;
+    min-height: 150px;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 1.1em;
+    font-family: 'Roboto', sans-serif;
+    resize: vertical;
+}
+
+.controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.language-select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 1em;
+    flex-grow: 1;
+}
+
+.translate-button {
+    padding: 12px 25px;
+    border-radius: 8px;
+    border: none;
+    background-color: #3f51b5;
+    color: white;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.translate-button:hover {
+    background-color: #1a237e;
+}
+
+.translation-result {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.translation-result h2 {
+    margin: 0 0 10px 0;
+    font-size: 1.4em;
+    color: #1a237e;
+}
+
+.translation-result p {
+    margin: 0;
+    font-size: 1.2em;
+    line-height: 1.6;
+}
+
+footer {
+    margin-top: 40px;
+    font-size: 0.9em;
+    color: #888;
+}
