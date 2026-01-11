@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
+import json # Import the json module
 from app.ai_content import generate_exercise, translate_text, generate_multiple_choice_exercise, generate_image
 from app.services.session import get_or_create_web_user
 from app.services.progress import get_completed_exercise_hashes, mark_exercise_as_completed, _hash_exercise # Import progress functions
@@ -43,8 +44,40 @@ async def get_level_selection(request: Request, language: str):
     }
     return templates.TemplateResponse("level.html", context)
 
+def load_topics():
+    """Loads topics from the JSON file."""
+    topics_path = Path(__file__).resolve().parents[2] / "content" / "topics.json"
+    try:
+        with open(topics_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
 @router.get("/learn/{language}/{level}", response_class=HTMLResponse)
-async def get_exercise_page(request: Request, language: str, level: str):
+async def get_topics_page(request: Request, language: str, level: str):
+    """Serves the topic selection page."""
+    all_topics = load_topics()
+    language_topics = all_topics.get(language, [])
+    
+    language_map = {
+        "russian": "Rus tili",
+        "english": "Ingliz tili",
+        "korean": "Koreys tili",
+        "uzbek": "O'zbek tili"
+    }
+    
+    context = {
+        "request": request,
+        "language_name": language_map.get(language, language.capitalize()),
+        "language_slug": language,
+        "level_slug": level,
+        "topics": language_topics
+    }
+    return templates.TemplateResponse("topics.html", context)
+
+
+@router.get("/learn/{language}/{level}/{topic}", response_class=HTMLResponse)
+async def get_exercise_page(request: Request, language: str, level: str, topic: str):
     """
     Serves the main exercise page.
     This is where the AI-generated content will be displayed.
@@ -56,7 +89,7 @@ async def get_exercise_page(request: Request, language: str, level: str):
     completed_hashes = get_completed_exercise_hashes(user.id)
     
     # Generate the exercise content, excluding completed ones
-    exercise_data = await generate_multiple_choice_exercise(language, level, list(completed_hashes))
+    exercise_data = await generate_multiple_choice_exercise(language, level, list(completed_hashes), topic=topic)
     
     image_url = None
     # If the exercise was generated successfully, try to generate an image for it

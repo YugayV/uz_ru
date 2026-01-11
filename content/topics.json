@@ -1,0 +1,42 @@
+{
+    "russian": [
+        "Животные",
+        "Еда и напитки",
+        "Семья и друзья",
+        "Цвета и формы",
+        "Природа и погода",
+        "Игрушки и игры",
+        "Числа и счет",
+        "Одежда"
+    ],
+    "english": [
+        "Animals",
+        "Food and Drinks",
+        "Family and Friends",
+        "Colors and Shapes",
+        "Nature and Weather",
+        "Toys and Games",
+        "Numbers and Counting",
+        "Clothes"
+    ],
+    "korean": [
+        "동물 (Animals)",
+        "음식 및 음료 (Food and Drinks)",
+        "가족과 친구들 (Family and Friends)",
+        "색깔과 모양 (Colors and Shapes)",
+        "자연과 날씨 (Nature and Weather)",
+        "장난감과 게임 (Toys and Games)",
+        "숫자와 세기 (Numbers and Counting)",
+        "옷 (Clothes)"
+    ],
+    "uzbek": [
+        "Hayvonlar",
+        "Oziq-ovqat va ichimliklar",
+        "Oila va do'stlar",
+        "Ranglar va shakllar",
+        "Tabiat va ob-havo",
+        "O'yinchoqlar va o'yinlar",
+        "Raqamlar va sanash",
+        "Kiyim-kechak"
+    ]
+}

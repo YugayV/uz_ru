@@ -90,10 +90,9 @@ async def translate_text(text: str, target_language: str):
     except Exception as e:
         return f"An unexpected error occurred: {str(e)}"
 
-async def generate_multiple_choice_exercise(language: str, level: str, exclude_hashes: list[str] = None):
+async def generate_multiple_choice_exercise(language: str, level: str, topic: str, exclude_hashes: list[str] = None):
     """
-    Generates a multiple-choice exercise as a JSON object using the DeepSeek API,
-    trying to avoid previously completed exercises.
+    Generates a multiple-choice exercise for a specific topic as a JSON object.
     """
     if not DEEPSEEK_API_KEY:
         return {"error": "DEEPSEEK_API_KEY is not set. Please check your .env file."}
@@ -103,13 +102,15 @@ async def generate_multiple_choice_exercise(language: str, level: str, exclude_h
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
     }
 
-    # A more advanced prompt to request a JSON structure
+    # A more advanced prompt to request a JSON structure based on a topic
     prompt = f"""
     Create a simple and fun multiple-choice language exercise for a child learning {language} at a {level} level.
+    The exercise must be about the topic: "{topic}".
     The target audience is native Uzbek speakers.
     The question should be engaging for a child.
     Provide a simple description for a relevant and cute cartoon-style image (a visual prompt).
-    
+    All text in the "question" and "options" fields should be short, clear, and easy to pronounce for text-to-speech generation.
+
     To ensure variety, please try to make this exercise different from ones that might have these themes or questions (represented by hashes): {", ".join(exclude_hashes or [])}
 
     Please return your response as a single JSON object with the following keys:
@@ -152,8 +153,8 @@ async def generate_multiple_choice_exercise(language: str, level: str, exclude_h
 
 # --- Image and Audio Generation ---
 
-# Using a public Hugging Face Space for free image generation
-IMAGE_GENERATION_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+# Using a different public Hugging Face model for better availability
+IMAGE_GENERATION_API_URL = "https://api-inference.huggingface.co/models/prompthero/openjourney-v4"
 # It's recommended to add your Hugging Face token to environment variables for higher limits
 HF_TOKEN = os.getenv("HF_TOKEN") 
 
@@ -163,19 +164,18 @@ async def generate_image(prompt: str) -> str | None:
     Returns the URL of the generated image or None if it fails.
     """
     if not HF_TOKEN:
-        # Fallback to a different, sometimes slower, public model if no token is provided
         # This makes it work out-of-the-box, but having a token is better.
-        image_api_url = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
-        headers = {"Content-Type": "application/json"}
-        payload = {"inputs": f"very simple cartoon, {prompt}, for kids, cute, children's book illustration, white background"}
+        image_api_url = IMAGE_GENERATION_API_URL
+        headers = {"Authorization": f"Bearer {HF_TOKEN}"} if HF_TOKEN else {}
+        payload = {"inputs": f"mdjrny-v4 style, cute simple cartoon drawing of {prompt}, for a children's book, simple white background, vector illustration"}
     else:
-        # Use the recommended SDXL model if a token is available
+        # Use the recommended model if a token is available
         image_api_url = IMAGE_GENERATION_API_URL
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {HF_TOKEN}"
         }
-        payload = {"inputs": f"very simple cute cartoon style for kids, {prompt}, children's book illustration, simple white background, vibrant colors"}
+        payload = {"inputs": f"mdjrny-v4 style, cute simple cartoon drawing of {prompt}, for a children's book, simple white background, vector illustration, vibrant colors"}
 
     try:
         # The model can take a while to load, so we use a long timeout.
