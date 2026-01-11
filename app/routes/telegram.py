@@ -12,9 +12,30 @@ import re
 import uuid
 from gtts import gTTS
 
-# Corrected imports to point inside `app`
-from app.services.session import get_state, set_state, clear_state, set_expected_answer, pop_expected_answer
-from app.tg_bot.games import get_random_game
+def set_telegram_webhook():
+    """Sets the Telegram webhook to the production URL."""
+    # Use PUBLIC_URL from environment, but default to the one you provided.
+    public_url = os.getenv("PUBLIC_URL", "https://uzru-production.up.railway.app")
+    webhook_url = f"{public_url}/telegram/webhook"
+    
+    if not BOT_TOKEN:
+        logger.error("Cannot set webhook: TELEGRAM_BOT_TOKEN is not configured.")
+        return
+
+    api_url = f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook"
+    logger.info(f"Setting Telegram webhook to: {webhook_url}")
+    
+    try:
+        response = requests.get(api_url, params={'url': webhook_url})
+        response.raise_for_status()
+        result = response.json()
+        if result.get("ok"):
+            logger.info(f"Webhook set successfully: {result.get('description')}")
+        else:
+            logger.error(f"Failed to set webhook: {result}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"An error occurred while setting webhook: {e}")
+
 
 router = APIRouter(prefix="/telegram", tags=["Telegram"])
 logger = logging.getLogger(__name__)

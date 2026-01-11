@@ -24,6 +24,7 @@ from app.routes import (
     adaptive,
     translator,
 )
+from app.routes.telegram import set_telegram_webhook # Import the new function
 
 # Legacy routers are now removed, ensure they are migrated to app/routes if needed.
 
@@ -33,6 +34,10 @@ async def lifespan(app: FastAPI):
     Application lifespan context manager. Runs on startup and shutdown.
     """
     print("✅ [main.py] LIFESPAN: Startup sequence initiated.")
+    
+    # Set the Telegram webhook on startup
+    set_telegram_webhook()
+
     print("🚀 AI Language Platform API is starting...")
     print("--- DEVELOPMENT: Resetting database ---")
     try:
@@ -84,7 +89,7 @@ app.include_router(premium.router)
 app.include_router(ai_tutor.router)
 app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
-app.include_router(telegram.router)
+app.include_router(telegram.router) # Re-enable the telegram router
 app.include_router(webapp.router)
 app.include_router(stt_game.router)
 app.include_router(admin.router)
