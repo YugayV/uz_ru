@@ -259,7 +259,7 @@ async def telegram_webhook(req: Request):
                         send_voice(chat_id, f"{idx+1}. {opt}", lang=learn_lang)
                     set_expected_answer(chat_id, str(exercise_data['correct_answer_index'] + 1)) # Store 1-indexed answer
                 else:
-                    send_message(chat_id, f"Mashqni yaratishda xatolik yuz berdi: {exercise_data.get('error', 'Noma\\'lum xato')}")
+                    send_message(chat_id, f"Mashqni yaratishda xatolik yuz berdi: {exercise_data.get('error', """Noma'lum xato""")}")
             else:
                 topics_text = "\\n".join([f"- {t}" for t in all_topics]) if all_topics else "(Mavzular topilmadi)"
                 send_message(chat_id, f"Iltimos, mavzular ro'yxatidan birini tanlang: \\n{topics_text}")
