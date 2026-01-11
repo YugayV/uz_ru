@@ -1,5 +1,7 @@
 print("✅ [main.py] START: Script execution begins.")
 
+import os
+import json
 from fastapi import FastAPI 
 from contextlib import asynccontextmanager
 from app.database import Base, engine 
@@ -26,6 +28,10 @@ from app.routes import (
 )
 from app.routes.telegram import set_telegram_webhook # Import the new function
 
+# Import all models to ensure they are registered with Base before table creation
+from app.models import user, lesson, level, ai_usage, kid_profile
+from app.models.progress import UserLessonProgress, CompletedExercise # Make sure our new model is imported
+
 # Legacy routers are now removed, ensure they are migrated to app/routes if needed.
 
 @asynccontextmanager
@@ -41,9 +47,7 @@ async def lifespan(app: FastAPI):
     print("🚀 AI Language Platform API is starting...")
     print("--- DEVELOPMENT: Resetting database ---")
     try:
-        # Import all models to ensure they are registered with Base
-        from app.models import user, lesson, level, progress, ai_usage, kid_profile
-        
+        # The engine and Base are already imported
         Base.metadata.drop_all(bind=engine)
         print("Tables dropped.")
         Base.metadata.create_all(bind=engine)

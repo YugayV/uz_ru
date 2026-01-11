@@ -3,6 +3,8 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from app.ai_content import generate_exercise, translate_text, generate_multiple_choice_exercise, generate_image
+from app.services.session import get_or_create_web_user
+from app.services.progress import get_completed_exercise_hashes, mark_exercise_as_completed, _hash_exercise # Import progress functions
 from gtts import gTTS
 import io
 
@@ -47,8 +49,14 @@ async def get_exercise_page(request: Request, language: str, level: str):
     Serves the main exercise page.
     This is where the AI-generated content will be displayed.
     """
-    # Generate the exercise content
-    exercise_data = await generate_multiple_choice_exercise(language, level)
+    session_id = request.cookies.get("session_id")
+    user, new_session_id = get_or_create_web_user(session_id)
+    
+    # Get completed exercises for this user
+    completed_hashes = get_completed_exercise_hashes(user.id)
+    
+    # Generate the exercise content, excluding completed ones
+    exercise_data = await generate_multiple_choice_exercise(language, level, list(completed_hashes))
     
     image_url = None
     # If the exercise was generated successfully, try to generate an image for it
@@ -76,7 +84,18 @@ async def get_exercise_page(request: Request, language: str, level: str):
         "exercise": exercise_data,
         "image_url": image_url
     }
-    return templates.TemplateResponse("exercise.html", context)
+    
+    # Store the hash of the current exercise in the user's session to mark it as completed later
+    if exercise_data and not exercise_data.get("error"):
+        current_hash = _hash_exercise(exercise_data)
+        request.session['current_exercise_hash'] = current_hash
+
+    response = templates.TemplateResponse("exercise.html", context)
+    # If a new session was created, set the cookie in the user's browser
+    if new_session_id:
+        response.set_cookie(key="session_id", value=new_session_id, httponly=True, max_age=365*24*60*60) # Cookie for 1 year
+    
+    return response
 
 @router.get("/translator", response_class=HTMLResponse)
 async def get_translator_page(request: Request):
