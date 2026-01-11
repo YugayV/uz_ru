@@ -33,7 +33,8 @@ async def get_level_selection(request: Request, language: str):
     language_map = {
         "russian": "Rus tili",
         "english": "Ingliz tili",
-        "korean": "Koreys tili"
+        "korean": "Koreys tili",
+        "uzbek": "O'zbek tili"
     }
     
     # Pass the language to the template
@@ -101,7 +102,8 @@ async def get_exercise_page(request: Request, language: str, level: str, topic: 
     language_map = {
         "russian": "Rus tili",
         "english": "Ingliz tili",
-        "korean": "Koreys tili"
+        "korean": "Koreys tili",
+        "uzbek": "O'zbek tili"
     }
     level_map = {
         "beginner": "Boshlang'ich",
@@ -198,8 +200,8 @@ def clean_text_for_tts(text: str) -> str:
         flags=re.UNICODE,
     )
     cleaned_text = emoji_pattern.sub(r'', text)
-    # Remove common non-verbal characters and extra whitespace
-    cleaned_text = cleaned_text.replace("🎲", "").replace("📚", "").replace("🗣️", "").replace("🧒", "").replace("🧑", "")
+    # Remove punctuation that can be misread by TTS, but keep spaces.
+    cleaned_text = re.sub(r'[^\w\s]', '', cleaned_text)
     return cleaned_text.strip()
 
 @router.get("/tts")
