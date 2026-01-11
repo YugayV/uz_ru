@@ -1,83 +1,62 @@
-print("✅ [main.py] START: Script execution begins.")
-
 import os
 import json
+import logging
 from fastapi import FastAPI 
 from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware # Import the session middleware
+
 from app.database import Base, engine 
-from app.routes import (
-    users,
-    levels,
-    lessons,
-    lives,
-    ai,
-    progress,
-    leaderboard,
-    premium,
-    ai_tutor,
-    payments,
-    stripe_webhook,
-    telegram,
-    webapp,
-    stt_game,
-    admin,
-    health,
-    public_lessons,
-    adaptive,
-    translator,
-)
-from app.routes.telegram import set_telegram_webhook # Import the new function
+from app.routes import webapp, telegram
+# from app.routes import progress # Temporarily commented out to fix import error
+
+from app.routes.telegram import set_telegram_webhook
 
 # Import all models to ensure they are registered with Base before table creation
+# Ensure all your models are imported here, including any new ones
 from app.models import user, lesson, level, ai_usage, kid_profile
-from app.models.progress import UserLessonProgress, CompletedExercise # Make sure our new model is imported
+from app.models.progress import UserLessonProgress, CompletedExercise 
 
-# Legacy routers are now removed, ensure they are migrated to app/routes if needed.
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Application lifespan context manager. Runs on startup and shutdown.
     """
-    print("✅ [main.py] LIFESPAN: Startup sequence initiated.")
+    logger.info("✅ [main.py] LIFESPAN: Startup sequence initiated.")
     
     # Set the Telegram webhook on startup
     set_telegram_webhook()
 
-    print("🚀 AI Language Platform API is starting...")
-    print("--- DEVELOPMENT: Resetting database ---")
+    logger.info("🚀 AI Language Platform API is starting...")
+    logger.info("--- DEVELOPMENT: Resetting database ---")
     try:
-        # The engine and Base are already imported
         Base.metadata.drop_all(bind=engine)
-        print("Tables dropped.")
+        logger.info("Tables dropped.")
         Base.metadata.create_all(bind=engine)
-        print("Tables recreated successfully.")
+        logger.info("Tables recreated successfully.")
     except Exception as e:
-        print(f"!!! DB RESET FAILED: {e}")
+        logger.critical(f"!!! DB RESET FAILED: {e}", exc_info=True)
     
-    print("✅ [main.py] LIFESPAN: Startup sequence finished. App is running.")
+    logger.info("✅ [main.py] LIFESPAN: Startup sequence finished. App is running.")
     yield
     
-    print("🛑 AI Language Platform API is shutting down...")
+    logger.info("🛑 AI Language Platform API is shutting down...")
 
-
-# Base.metadata.create_all(bind=engine) # This is now handled in lifespan
 
 app = FastAPI( 
     title='AI Language Platform', 
     version='0.3.0',
     lifespan=lifespan
 )
-print("✅ [main.py] FastAPI app instance created.")
+logger.info("✅ [main.py] FastAPI app instance created.")
 
 # Add session middleware. A strong, secret key is required for production.
-# This should be loaded from environment variables.
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET_KEY", "a-temporary-secret-key-for-dev"))
 
 # Attach simple rate-limiting middleware (placeholder for Redis-based limiter)
-from app.middleware import SimpleRateLimitMiddleware
-app.add_middleware(SimpleRateLimitMiddleware)
+# from app.middleware import SimpleRateLimitMiddleware
+# app.add_middleware(SimpleRateLimitMiddleware)
 
 
 # Serve `content/` as static files under `/static`
@@ -87,34 +66,33 @@ CONTENT_DIR = Path(__file__).resolve().parents[1] / "content"
 app.mount("/static", StaticFiles(directory=str(CONTENT_DIR)), name="static")
 
 # Include all the routers for the application
-app.include_router(users.router)
-app.include_router(levels.router)
-app.include_router(lessons.router)
-app.include_router(lives.router)
-app.include_router(ai.router)
-app.include_router(progress.router)
-app.include_router(leaderboard.router)
-app.include_router(premium.router)
-app.include_router(ai_tutor.router)
-app.include_router(payments.router)
-app.include_router(stripe_webhook.router)
-app.include_router(telegram.router) # Re-enable the telegram router
+# app.include_router(users.router) # Uncomment when these files exist and are correct
+# app.include_router(levels.router)
+# app.include_router(lessons.router)
+# app.include_router(lives.router)
+# app.include_router(ai.router)
+# app.include_router(progress.router) # Temporarily commented out
+# app.include_router(leaderboard.router)
+# app.include_router(premium.router)
+# app.include_router(ai_tutor.router)
+# app.include_router(payments.router)
+# app.include_router(stripe_webhook.router)
+app.include_router(telegram.router)
+# app.include_router(stt_game.router)
+# app.include_router(admin.router)
+# app.include_router(health.router)
+# app.include_router(public_lessons.router)
+# app.include_router(adaptive.router)
+# app.include_router(translator.router)
 app.include_router(webapp.router)
-app.include_router(stt_game.router)
-app.include_router(admin.router)
-app.include_router(health.router)
-app.include_router(public_lessons.router)
-app.include_router(adaptive.router)
-app.include_router(translator.router)
 
-print("✅ [main.py] END: All routers included. App is configured.")
+
+logger.info("✅ [main.py] END: All routers included. App is configured.")
 
 
 @app.get('/')
 def root(): 
     return { 
         "status": 'ok', 
-        'message': "AI Language Platform backend is running"
+        'message': "AI Language Platform backend is running. Use /learn to start the web app, or interact with the Telegram bot."
     }
-
-
