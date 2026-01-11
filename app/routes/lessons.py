@@ -1,53 +1,33 @@
-from fastapi import APIRouter, Depends 
-from sqlalchemy.orm import Session 
+from fastapi import APIRouter, HTTPException
+from app.services import content_generator
 
-from app.schemas.lesson import LessonCreate, LessonOut 
-from app.models.lesson import Lesson 
-from app.core.deps import get_db 
-import json 
-import app.database
+router = APIRouter(prefix="/lessons", tags=["Lessons V2 - Dynamic Content"])
 
-router = APIRouter(prefix="/lessons", tags=["Lessons"])
-
-@router.post("/", response_model=LessonOut)
-def create_lesson(lesson: LessonCreate, db: Session = Depends(get_db)): 
-    db_lesson = Lesson(**lesson.model_dump())
-    db.add(db_lesson)
-    db.commit()
-    db.refresh(db_lesson)
-    return db_lesson
-
-@router.get("/by-level/{level_id}", response_model = list[LessonOut])
-def get_lessons_by_level(level_id: int, db: Session = Depends(get_db)): 
-    return ( 
-        db.query(Lesson)
-        .filter(Lesson.level_id == level_id)
-        .order_by(Lesson.order)
-        .all()
-    )
-
-
-    lesson = Lesson(
-        title=data["title"],
-        level_id=level_id,
-        content=json.dumps(data["content"])
-    )
-    db.add(lesson)
-    db.commit()
-
-
-from fastapi import Query, HTTPException
-from pathlib import Path
-
-@router.get("/{pair}/{level}")
-def get_lessons_for_pair(pair: str, level: int, kids: bool = Query(False)):
-    """Return lessons for a language pair and level from data/lessons/{pair}/level_{level}.json
-
-    `pair` accepts both `uz-ru` and `uz_ru` formats.
-    If `kids=true` it will filter tasks suitable for kids.
+@router.get("/topics/{pair}/{level}", response_model=list[str])
+def get_topics_for_level(pair: str, level: int):
     """
-    pair_key = pair.replace("-", "_")
-    content_dir = Path(__file__).resolve().parents[1] / "data" / "lessons"
+    Generates and returns a list of learning topics for a given language pair and level.
+    `pair` should be in `uz-ru`, `uz-en`, or `uz-ko` format.
+    """
+    try:
+        topics = content_generator.generate_topics(pair=pair, level=level)
+        return topics
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/games/{pair}/{level}/{topic}")
+def get_games_for_topic(pair: str, level: int, topic: str):
+    """
+    Generates and returns a list of games/exercises for a specific topic.
+    """
+    try:
+        games = content_generator.generate_games_for_topic(
+            pair=pair, level=level, topic=topic
+        )
+        return games
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     path = content_dir / pair_key / f"level_{level}.json"
 
     if not path.exists():

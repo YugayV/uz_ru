@@ -20,6 +20,7 @@ from app.routes import (
     health,
     public_lessons,
     adaptive,
+    translator,
 )
 
 # Legacy routers are now removed, ensure they are migrated to app/routes if needed.
@@ -79,13 +80,12 @@ app.include_router(payments.router)
 app.include_router(stripe_webhook.router)
 app.include_router(telegram.router)
 app.include_router(webapp.router)
-# app.include_router(character.router) # Temporarily disabled - file was removed
 app.include_router(stt_game.router)
 app.include_router(admin.router)
-# app.include_router(reward.router) # Temporarily disabled - file was removed
+app.include_router(health.router)
 app.include_router(public_lessons.router)
 app.include_router(adaptive.router)
-app.include_router(health.router)
+app.include_router(translator.router)
 
 
 @app.get('/')
