@@ -67,15 +67,14 @@ async def get_exercise_page(request: Request, language: str, level: str):
         "intermediate": "O'rta",
         "advanced": "Yuqori"
     }
-, # Pass the entire exercise object
-        "image_url": image_url # Pass the generated image URL
     context = {
         "request": request,
         "language_name": language_map.get(language, language.capitalize()),
         "language_slug": language,
         "level_name": level_map.get(level, level.capitalize()),
         "level_slug": level,
-        "exercise": exercise_data # Pass the entire exercise object
+        "exercise": exercise_data,
+        "image_url": image_url
     }
     return templates.TemplateResponse("exercise.html", context)
 
