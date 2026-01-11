@@ -40,14 +40,26 @@ from fastapi import Query, HTTPException
 from pathlib import Path
 
 @router.get("/{pair}/{level}")
-def get_lessons_for_pair(pair: str, level: int, kids: bool = Query(False)):
-    """Return lessons for a language pair and level from data/lessons/{pair}/level_{level}.json
-
-    `pair` accepts both `uz-ru` and `uz_ru` formats.
-    If `kids=true` it will filter tasks suitable for kids.
+def get_lessons_for_pair(pair: str, level: int, topic: str = "Greetings", kids: bool = Query(False)):
     """
-    pair_key = pair.replace("-", "_")
-    content_dir = Path(__file__).resolve().parents[1] / "data" / "lessons"
+    Generate a lesson for a language pair, level, and topic.
+    If `kids=true`, it will filter/modify tasks suitable for kids.
+    """
+    # Placeholder for language mapping
+    source_lang, target_lang = pair.split("-")
+
+    # Generate a lesson dynamically instead of loading from a static file
+    lesson_content = generate_lesson(level, topic, source_lang, target_lang)
+
+    # The structure of the returned lesson can be adjusted as needed.
+    # This is a simplified example.
+    return {
+        "level": level,
+        "pair": pair,
+        "topic": topic,
+        "kids_mode": kids,
+        "lesson": lesson_content,
+    }
     path = content_dir / pair_key / f"level_{level}.json"
 
     if not path.exists():

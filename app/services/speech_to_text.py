@@ -1,4 +1,5 @@
 import openai
+import re
 
 import os
 from dotenv import load_dotenv
@@ -12,4 +13,9 @@ def speech_to_text(audio_file):
         file=audio_file,
         model="whisper-1"
     )
-    return transcript.text
+    
+    text = transcript.text
+    # Remove emojis, punctuation, and special characters, keeping letters, numbers, and spaces
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+    
+    return text
