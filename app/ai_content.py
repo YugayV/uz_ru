@@ -145,13 +145,14 @@ async def generate_multiple_choice_exercise(learn_language: str, native_language
     - "question": A string containing the question in {native_lang_display}
     - "options": A list of 4 strings in {learn_lang_display} representing the possible answers
     - "correct_answer_index": An integer (from 0 to 3) indicating the index of the correct answer
+    - "explanation": A string in {native_lang_display} explaining the correct answer (e.g. "The correct translation for 'Apple' is 'Олма'.")
     - "visual_prompt": A string describing a simple, friendly image related to the question
     
     Example (if native=Uzbek Cyrillic, learning=Russian):
-    {{ "question": "Бу нима?", "options": ["Яблоко", "Банан", "Виноград", "Гранат"], "correct_answer_index": 0, "visual_prompt": "A friendly red apple smiling." }}
+    {{ "question": "Бу нима?", "options": ["Яблоко", "Банан", "Виноград", "Гранат"], "correct_answer_index": 0, "explanation": "'Яблоко' сўзи ўзбек тилида 'Олма' дегани.", "visual_prompt": "A friendly red apple smiling." }}
     
     Example (if native=Russian, learning=English):
-    {{ "question": "Что это?", "options": ["Apple", "Banana", "Grape", "Pomegranate"], "correct_answer_index": 0, "visual_prompt": "A friendly red apple smiling." }}
+    {{ "question": "Что это?", "options": ["Apple", "Banana", "Grape", "Pomegranate"], "correct_answer_index": 0, "explanation": "'Apple' переводится как 'Яблоко'.", "visual_prompt": "A friendly red apple smiling." }}
 
     Do not include any text or explanations outside of the JSON object.
     """
@@ -196,7 +197,7 @@ async def generate_multiple_choice_exercise(learn_language: str, native_language
 # --- Image Generation ---
 
 # Using a more reliable public Hugging Face model
-IMAGE_GENERATION_API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
+IMAGE_GENERATION_API_URL = "https://router.huggingface.co/models/runwayml/stable-diffusion-v1-5"
 HF_TOKEN = os.getenv("HF_TOKEN") 
 
 async def generate_image(prompt: str) -> str | None:

@@ -13,6 +13,7 @@ from pathlib import Path
 from app.services.session import get_state, set_state, clear_state, set_expected_answer, pop_expected_answer
 from app.services.speech_utils import is_close_answer
 from app.ai_content import generate_multiple_choice_exercise
+from app.translations import get_text
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ def clean_text_for_tts(text: str) -> str:
         flags=re.UNICODE,
     )
     cleaned_text = emoji_pattern.sub(r'', text)
-    cleaned_text = re.sub(r'[^\\w\\s]', '', cleaned_text) 
+    # Removed aggressive cleaning that was stripping non-Latin characters
     return cleaned_text.strip()
 
 def send_voice(chat_id, text, lang="ru"):
@@ -166,6 +167,12 @@ def get_exercise_options_keyboard(options: list) -> dict:
     keyboard_buttons.append([{"text": "/topics"}, {"text": "/start"}]) # Navigation
     return {"keyboard": keyboard_buttons, "resize_keyboard": True, "one_time_keyboard": True}
 
+def get_exercise_result_keyboard(native_lang: str) -> dict:
+    return {"keyboard": [
+        [{"text": get_text(native_lang, "try_again_button")}, {"text": get_text(native_lang, "next_exercise_button")}],
+        [{"text": get_text(native_lang, "restart_button")}]
+    ], "resize_keyboard": True, "one_time_keyboard": True}
+
 
 @router.post("/webhook")
 async def telegram_webhook(req: Request):
@@ -201,6 +208,9 @@ async def telegram_webhook(req: Request):
             user_state = get_state(chat_id)
 
         current_mode = user_state.get("current_mode")
+        # Get native language properly, defaulting to 'uzbek' if not set
+        native_lang = user_state.get("native_language", "uzbek")
+        
         user_message_text = message["text"] if message and "text" in message else ""
         
         # --- Handle commands ---
@@ -209,27 +219,23 @@ async def telegram_webhook(req: Request):
             if command == "/start":
                 send_message(
                     chat_id,
-                    "Ассалому алайкум! AI тил ўрганиш ботига хуш келибсиз. 🎓\n\n"
-                    "Аввал ўзингизнинг она тилингизни танланг:\n\n"
-                    "💡 Кейинчалик:\n"
-                    "📚 /topics - Машқлар учун мавзулар\n"
-                    "🎮 /games - Интерактив ўйинлар",
+                    get_text(native_lang, "welcome"),
                     reply_markup=get_language_keyboard(["russian", "english", "korean", "uzbek"], "choose_native_language")
                 )
                 set_state(chat_id, current_mode="choose_native_language")
             elif command == "/help":
-                send_message(chat_id, "Ҳали ёрдам функцияси мавжуд эмас.")
+                send_message(chat_id, get_text(native_lang, "help"))
             elif command == "/voice_test":
                 send_message(chat_id, "Бу овоз тести. Ассалому алайкум!")
-                send_voice(chat_id, "Бу овоз тести. Ассалому алайкум!", lang="uz")
+                send_voice(chat_id, "Бу овоз тести. Ассалому алайкум!", lang="uzbek")
             elif command == "/topics":
                 if "learn_language" in user_state and "level" in user_state:
                     learn_lang = user_state.get("learn_language")
                     topics = load_topics_for_telegram().get(learn_lang, [])
-                    send_message(chat_id, "Мавзулар рўйхати:", reply_markup=get_topics_keyboard(topics))
+                    send_message(chat_id, get_text(native_lang, "topics_list"), reply_markup=get_topics_keyboard(topics))
                     set_state(chat_id, current_mode="choose_topic")
                 else:
-                    send_message(chat_id, "Мавзуларни кўриш учун аввал тил ва даражани танлашингиз керак. Бошлаш учун /start босинг.")
+                    send_message(chat_id, get_text(native_lang, "need_lang_level"))
             elif command == "/games":
                 if "learn_language" in user_state and "level" in user_state:
                     # Show game type selection
@@ -242,98 +248,129 @@ async def telegram_webhook(req: Request):
                         "resize_keyboard": True,
                         "one_time_keyboard": True
                     }
-                    send_message(chat_id, "Ўйин турини танланг:", reply_markup=game_keyboard)
+                    send_message(chat_id, get_text(native_lang, "game_type_select"), reply_markup=game_keyboard)
                     set_state(chat_id, current_mode="choose_game_type")
                 else:
-                    send_message(chat_id, "Ўйинларни кўриш учун аввал тил ва даражани танлашингиз керак. Бошлаш учун /start босинг.")
+                    send_message(chat_id, get_text(native_lang, "need_lang_level"))
             else:
-                send_message(chat_id, "Номаълум буйруқ.")
+                send_message(chat_id, get_text(native_lang, "unknown_command"))
             return {"ok": True}
 
         # --- State-based interaction logic ---
         if current_mode == "choose_native_language":
             selected_native_lang_display = user_message_text.strip().replace(" 🇷🇺", "").replace(" 🇬🇧", "").replace(" 🇰🇷", "").replace(" 🇺🇿", "")
+            # Mapping for various inputs
             valid_langs_map = {
-                "рус тили": "russian", "rus tili": "russian", "russian": "russian",
-                "инглиз тили": "english", "ingliz tili": "english", "english": "english",
-                "корейс тили": "korean", "koreys tili": "korean", "korean": "korean",
+                "русский": "russian", "рус тили": "russian", "rus tili": "russian", "russian": "russian",
+                "инглиз тили": "english", "english": "english", "ingliz tili": "english",
+                "корейс тили": "korean", "한국어": "korean", "koreys tili": "korean", "korean": "korean",
                 "ўзбек тили": "uzbek", "o'zbek tili": "uzbek", "uzbek": "uzbek",
             }
-            native_lang_slug = valid_langs_map.get(selected_native_lang_display.lower())
-
+            # Simplified mapping check
+            native_lang_slug = None
+            for key, val in valid_langs_map.items():
+                if key in selected_native_lang_display.lower():
+                    native_lang_slug = val
+                    break
+            
             if native_lang_slug:
                 set_state(chat_id, native_language=native_lang_slug, current_mode="choose_learn_language")
+                
+                # Update native_lang usage immediately
+                native_lang = native_lang_slug
+                
                 send_message(
                     chat_id, 
-                    f"Сизнинг она тилингиз: {native_lang_slug.capitalize()}. Энди ўрганиш учун тилни танланг:",
+                    get_text(native_lang, "native_selected", lang=selected_native_lang_display),
                     reply_markup=get_language_keyboard(["russian", "english", "korean", "uzbek"], "choose_learn_language")
                 )
-                send_voice(chat_id, f"Сизнинг она тилингиз: {native_lang_slug.capitalize()}.", lang=native_lang_slug)
+                # Send voice in the new native language
+                voice_text = get_text(native_lang, "native_selected", lang=selected_native_lang_display)
+                send_voice(chat_id, voice_text, lang=native_lang)
             else:
-                send_message(chat_id, "Илтимос, она тилингизни танланг (Рус тили, Инглиз тили, Корейс тили, Ўзбек тили).",
+                send_message(chat_id, get_text(native_lang, "please_select_native"),
                              reply_markup=get_language_keyboard(["russian", "english", "korean", "uzbek"], "choose_native_language"))
 
         elif current_mode == "choose_learn_language":
             selected_learn_lang_display = user_message_text.strip().replace(" 🇷🇺", "").replace(" 🇬🇧", "").replace(" 🇰🇷", "").replace(" 🇺🇿", "")
-            native_lang = user_state.get("native_language")
+            # Ensure native_lang is set
+            native_lang = user_state.get("native_language", "uzbek")
+            
             valid_langs_map = {
-                "рус тили": "russian", "rus tili": "russian", "russian": "russian",
-                "инглиз тили": "english", "ingliz tili": "english", "english": "english",
-                "корейс тили": "korean", "koreys tili": "korean", "korean": "korean",
+                "русский": "russian", "рус тили": "russian", "rus tili": "russian", "russian": "russian",
+                "инглиз тили": "english", "english": "english", "ingliz tili": "english",
+                "корейс тили": "korean", "한국어": "korean", "koreys tili": "korean", "korean": "korean",
                 "ўзбек тили": "uzbek", "o'zbek tili": "uzbek", "uzbek": "uzbek",
             }
-            learn_lang_slug = valid_langs_map.get(selected_learn_lang_display.lower())
+            learn_lang_slug = None
+            for key, val in valid_langs_map.items():
+                if key in selected_learn_lang_display.lower():
+                    learn_lang_slug = val
+                    break
 
             if learn_lang_slug:
                 set_state(chat_id, learn_language=learn_lang_slug, current_mode="choose_level")
+                
                 send_message(
                     chat_id, 
-                    f"Ажойиб! Сиз {learn_lang_slug.capitalize()} тилини ўрганишни танладингиз. Энди даражангизни танланг:",
+                    get_text(native_lang, "learn_selected", lang=selected_learn_lang_display),
                     reply_markup=get_level_keyboard()
                 )
-                send_voice(chat_id, f"Ажойиб! Сиз {learn_lang_slug.capitalize()} тилини ўрганишни танладингиз.", lang=learn_lang_slug)
+                voice_text = get_text(native_lang, "learn_selected", lang=selected_learn_lang_display)
+                send_voice(chat_id, voice_text, lang=native_lang)
             else:
-                send_message(chat_id, "Илтимос, ўрганиш учун тиллардан бирини танланг (Рус тили, Инглиз тили, Корейс тили, Ўзбек тили).",
+                send_message(chat_id, get_text(native_lang, "please_select_learn"),
                              reply_markup=get_language_keyboard(["russian", "english", "korean", "uzbek"], "choose_learn_language"))
         
         elif current_mode == "choose_level":
             selected_level = user_message_text.lower().strip()
             learn_lang = user_state.get("learn_language")
+            native_lang = user_state.get("native_language", "uzbek")
+            
             valid_levels = ["beginner", "intermediate", "advanced"]
             level_map = {
                 "бошланғич": "beginner", "boshlang'ich": "beginner", "beginner": "beginner",
-                "ўрта": "intermediate", "o'rta": "intermediate", "intermediate": "intermediate",
+                "ўрта": "intermediate", "o'rta": "intermediate", "middle": "intermediate", "intermediate": "intermediate",
                 "юқори": "advanced", "yuqori": "advanced", "advanced": "advanced",
             }
-            level_slug = level_map.get(selected_level)
+            
+            # Try to match key in selected level text
+            level_slug = None
+            for key, val in level_map.items():
+                if key in selected_level:
+                    level_slug = val
+                    break
 
             if level_slug:
                 set_state(chat_id, level=level_slug, current_mode="choose_topic")
                 topics = load_topics_for_telegram().get(learn_lang, [])
+                
                 send_message(
                     chat_id, 
-                    f"Даража {level_slug.capitalize()} танланди. Энди мавзуни танланг:",
+                    get_text(native_lang, "level_selected", level=level_slug.capitalize()),
                     reply_markup=get_topics_keyboard(topics)
                 )
-                send_voice(chat_id, f"Даража {level_slug.capitalize()} танланди. Энди мавзуни танланг.", lang=learn_lang)
+                voice_text = get_text(native_lang, "level_selected", level=level_slug.capitalize())
+                send_voice(chat_id, voice_text, lang=native_lang)
             else:
-                send_message(chat_id, "Илтимос, тўғри даражани танланг (Beginner, Intermediate, Advanced).",
+                send_message(chat_id, get_text(native_lang, "please_select_level"),
                              reply_markup=get_level_keyboard())
 
         elif current_mode == "choose_topic":
             selected_topic = user_message_text.strip()
             learn_lang = user_state.get("learn_language")
             level = user_state.get("level")
+            native_lang = user_state.get("native_language", "uzbek")
             all_topics = load_topics_for_telegram().get(learn_lang, [])
 
             if selected_topic in all_topics:
                 set_state(chat_id, topic=selected_topic, current_mode="in_exercise")
-                send_message(chat_id, f"Мавзу '{selected_topic}' танланди. Машқ юкланмоқда...")
                 
-                # Get native language for question generation
-                native_lang = user_state.get("native_language", "uzbek")
-                send_voice(chat_id, f"Мавзу '{selected_topic}' танланди. Машқ юкланмоқда.", lang=native_lang)
+                msg_text = get_text(native_lang, "topic_selected", topic=selected_topic)
+                send_message(chat_id, msg_text)
+                send_voice(chat_id, msg_text, lang=native_lang)
                 
+                # Get native language for question generation (using variable we already have)
                 exercise_data = await generate_multiple_choice_exercise(
                     learn_language=learn_lang,
                     native_language=native_lang,
@@ -342,9 +379,10 @@ async def telegram_webhook(req: Request):
                     exclude_hashes=[] 
                 )
                 if exercise_data and not exercise_data.get("error"):
-                    question_text = f"Савол: {exercise_data['question']}"
+                    question_label = get_text(native_lang, "question_label")
+                    question_text = f"{question_label}: {exercise_data['question']}"
                     options_text_list = [f"{idx+1}. {opt}" for idx, opt in enumerate(exercise_data['options'])]
-                    options_text_combined = "\\n".join(options_text_list)
+                    options_text_combined = "\n".join(options_text_list)
                     
                     send_message(chat_id, question_text)
                     # Question is now in native language, so use native_lang for TTS
@@ -353,46 +391,172 @@ async def telegram_webhook(req: Request):
                     send_message(chat_id, options_text_combined, reply_markup=get_exercise_options_keyboard(exercise_data['options']))
 
                     set_expected_answer(chat_id, str(exercise_data['correct_answer_index'] + 1)) 
+                    set_state(chat_id, current_explanation=exercise_data.get("explanation", ""))
                 else:
-                    send_message(chat_id, f"Машқни яратишда хатолик юз берди: {exercise_data.get('error', 'Номаълум хато')}")
+                    error_msg = exercise_data.get('error', 'Unknown error')
+                    send_message(chat_id, get_text(native_lang, "error_generating", error=error_msg))
             else:
-                topics_text = "\n".join([f"- {t}" for t in all_topics]) if all_topics else "(Мавзулар топилмади)"
-                send_message(chat_id, f"Илтимос, мавзулар рўйхатидан бирини танланг: \n{topics_text}",
+                topics_text = "\n".join([f"- {t}" for t in all_topics]) if all_topics else ""
+                send_message(chat_id, get_text(native_lang, "please_select_topic") + f"\n{topics_text}",
                              reply_markup=get_topics_keyboard(all_topics))
         
         elif current_mode == "in_exercise":
             user_answer = user_message_text.strip()
+            # Ensure native_lang is set
+            native_lang = user_state.get("native_language", "uzbek")
+            
+            # Check for navigation buttons first
+            try_again_txt = get_text(native_lang, "try_again_button")
+            next_ex_txt = get_text(native_lang, "next_exercise_button")
+            restart_txt = get_text(native_lang, "restart_button")
+            
+            if user_answer == try_again_txt:
+                 # Logic to re-ask could go here, but for now we'll just treat it as next exercise for simplicity or restart topic
+                 # Since we don't store previous question state easily, let's treat "Try Again" as "New Question" or just ignore if not possible.
+                 # Actually, better to treating it as "Next Exercise" effectively if we can't repeat.
+                 # Or better: "Try Again" is not offering much value if we showed the answer.
+                 # Let's map "Try Again" to "Next Exercise" for now to avoid complexity, or just re-generate.
+                 # Better yet: Let's assume "Try Again" means "Generate another one".
+                 set_state(chat_id, current_mode="choose_topic")
+                 # Trigger topic selection logic again (Need to refactor to avoid code duplication? Or just simulate /topics)
+                 # Simulating /topics selection with current topic:
+                 current_topic = user_state.get("topic")
+                 # We can trick the bot by calling the logic for choose_topic again? 
+                 # No, let's just send a message to pick topic or auto-pick.
+                 # Easiest: clear state slightly and pretend topic was selected.
+                 # Actually, simpler:
+                 send_message(chat_id, get_text(native_lang, "topic_selected", topic=user_state.get("topic", "")))
+                 # Call separate function or just tell user to wait. 
+                 # To keep it simple in this monolithic function, let's Redirect to "choose_topic" handler by recursively calling or just guiding user?
+                 # We can just change current_mode to "choose_topic" and assume the user sends the topic name? No.
+                 # Best: Send "Please type topic again" or just Auto-generate.
+                 # Auto-generation requires async call here.
+                 
+                 # Let's just handle "Next Exercise" and "Home" for now given constraints.
+                 # Use "topic" from state to generate new exercise.
+                 pass
+
+            if user_answer == next_ex_txt or user_answer == try_again_txt: # treating try again as next for now
+                current_topic = user_state.get("topic")
+                if current_topic:
+                     # Re-run generation logic.
+                     # Since we can't easily jump back to 'choose_topic' block without user input,
+                     # We will just instruct user or call logic if I refactor.
+                     # Refactoring is risky. Let's just unset expected answer and set mode to 'choose_topic' 
+                     # and Simulate user sending the topic name?
+                     # No, user didn't send topic name.
+                     # Let's use a trick: Set mode to "choose_topic" and call the webhook logic? No.
+                     
+                     # Simple solution: prompt user to click "Next" which sends a command?
+                     # No, the button sends text.
+                     
+                     # Let's just generate the game right here!
+                     # Copy-paste generation logic? No.
+                     # Let's clean up state and ask to select topic again or use /topics.
+                     pass
+            
+            # --- Simplified Logic within constraints ---
+            # If user sends navigation text, handle it.
+            if user_answer == next_ex_txt or user_answer == try_again_txt:
+                 # Use the existing topic to generate a new Q
+                 # Pass control to 'choose_topic' logic by setting mode and simulating input?
+                 # We can't simulate input easily. 
+                 # We will just ask user to confirm topic or just say "Loading..." and call generate.
+                 
+                 # REFACTOR: We should extract generation to a function.
+                 # But for now:
+                 topic = user_state.get("topic")
+                 if topic:
+                     # Simulate topic selection:
+                     # We can just set state 'choose_topic' and tell user "Send topic name" 
+                     # but that's bad UX if they clicked "Next".
+                     
+                     # Let's just generate it here.
+                     msg_text = get_text(native_lang, "topic_selected", topic=topic)
+                     send_message(chat_id, msg_text)
+                     
+                     learn_lang = user_state.get("learn_language")
+                     level = user_state.get("level")
+                     
+                     exercise_data = await generate_multiple_choice_exercise(
+                        learn_language=learn_lang,
+                        native_language=native_lang,
+                        level=level, 
+                        topic=topic,
+                        exclude_hashes=[] 
+                     )
+                     
+                     if exercise_data and not exercise_data.get("error"):
+                        question_label = get_text(native_lang, "question_label")
+                        question_text = f"{question_label}: {exercise_data['question']}"
+                        options_text_list = [f"{idx+1}. {opt}" for idx, opt in enumerate(exercise_data['options'])]
+                        options_text_combined = "\n".join(options_text_list)
+                        
+                        send_message(chat_id, question_text)
+                        send_voice(chat_id, exercise_data['question'], lang=native_lang)
+                        send_message(chat_id, options_text_combined, reply_markup=get_exercise_options_keyboard(exercise_data['options']))
+                        
+                        set_expected_answer(chat_id, str(exercise_data['correct_answer_index'] + 1)) 
+                        set_state(chat_id, current_explanation=exercise_data.get("explanation", ""))
+                     else:
+                        send_message(chat_id, get_text(native_lang, "error_generating", error=exercise_data.get('error')))
+                     return {"ok": True}
+
+            if user_answer == restart_txt:
+                send_message(chat_id, get_text(native_lang, "welcome"), reply_markup=get_language_keyboard(["russian", "english", "korean", "uzbek"], "choose_native_language"))
+                set_state(chat_id, current_mode="choose_native_language")
+                return {"ok": True}
+
             expected_answer_index_str = pop_expected_answer(chat_id)
 
             if expected_answer_index_str and user_answer.isdigit():
                 expected_answer_index = int(expected_answer_index_str)
                 if int(user_answer) == expected_answer_index:
-                    send_message(chat_id, "Тўғри жавоб! Баракалла!")
-                    send_voice(chat_id, "Тўғри жавоб! Баракалла!", lang=user_state.get("native_language", "uz")) 
+                    msg_text = get_text(native_lang, "correct") # fixed key from correct_answer
+                    send_message(chat_id, msg_text)
+                    send_voice(chat_id, msg_text, lang=native_lang) 
+                    
+                    # Show result buttons
+                    send_message(chat_id, get_text(native_lang, "next_exercise"), reply_markup=get_exercise_result_keyboard(native_lang))
                 else:
-                    send_message(chat_id, "Нотўғри жавоб. Яна бир бор уриниб кўринг.")
-                    send_voice(chat_id, "Нотўғри жавоб. Яна бир бор уриниб кўринг.", lang=user_state.get("native_language", "uz"))
+                    explanation = user_state.get("current_explanation", "")
+                    msg_text = get_text(native_lang, "incorrect_with_explanation", explanation=explanation)
+                    send_message(chat_id, msg_text)
+                    send_voice(chat_id, get_text(native_lang, "incorrect"), lang=native_lang) # Just say incorrect for voice
+                    
+                    # Show result buttons
+                    send_message(chat_id, get_text(native_lang, "next_exercise"), reply_markup=get_exercise_result_keyboard(native_lang))
             else:
-                send_message(chat_id, "Илтимос, жавоб вариантининг рақамини киритинг.",
-                             reply_markup=get_exercise_options_keyboard(["1","2","3","4"])) # Show options again
+                # If we popped answer but it wasn't valid digit, and not nav button -> 
+                # We lost the expected answer! We must restore it or just fail gracefully.
+                # Since pop_expected_answer removes it, we are in trouble if user sends garbage.
+                # BUT: pop_expected_answer implementation (redis) typically removes.
+                # We should probably peek or restore.
+                # Let's assume we can't easily restore without keeping it in variable.
+                # Re-set it if valid?
+                if expected_answer_index_str:
+                    set_expected_answer(chat_id, expected_answer_index_str)
+                    
+                send_message(chat_id, get_text(native_lang, "enter_number"),
+                             reply_markup=get_exercise_options_keyboard(["1","2","3","4"])) 
 
-            send_message(
-                chat_id, 
-                "Кейинги машқни бошлаш учун /start буйруғини босинг ёки мавзуни ўзгартириш учун /topics ёзинг.",
-                reply_markup={"remove_keyboard": True}
-            )
-            set_state(chat_id, current_mode="start")
 
         elif current_mode == "choose_game_type":
             # Map game type selection
+            native_lang = user_state.get("native_language", "uzbek")
+            
             game_type_map = {
-                "🎯 мослаштириш ўйини": "matching",
-                "🧠 хотира ўйини": "memory",
-                "🎨 судраб ташлаш": "drag_drop",
-                "❓ викторина": "quiz"
+                "🎯 мослаштириш ўйини": "matching", "matching": "matching",
+                "🧠 хотира ўйини": "memory", "memory": "memory",
+                "🎨 судраб ташлаш": "drag_drop", "drag_drop": "drag_drop",
+                "❓ викторина": "quiz", "quiz": "quiz"
             }
             
-            selected_game_type = game_type_map.get(user_message_text.lower().strip())
+            selected_game_type = None
+            for key, val in game_type_map.items():
+                if key in user_message_text.lower():
+                    selected_game_type = val
+                    break
             
             if selected_game_type:
                 set_state(chat_id, game_type=selected_game_type, current_mode="choose_game_topic")
@@ -400,9 +564,9 @@ async def telegram_webhook(req: Request):
                 # Show topics for game
                 learn_lang = user_state.get("learn_language")
                 topics = load_topics_for_telegram().get(learn_lang, [])
-                send_message(chat_id, "Ўйин учун мавзу танланг:", reply_markup=get_topics_keyboard(topics))
+                send_message(chat_id, get_text(native_lang, "choose_game_topic"), reply_markup=get_topics_keyboard(topics))
             else:
-                send_message(chat_id, "Илтимос, ўйин турини танланг.")
+                send_message(chat_id, get_text(native_lang, "please_select_game_type"))
                 
         elif current_mode == "choose_game_topic":
             from app.game_generator import generate_interactive_game, generate_game_images
@@ -489,18 +653,22 @@ async def telegram_webhook(req: Request):
                             options_text = "\n".join([f"{i+1}. {opt}" for i, opt in enumerate(options)])
                             send_message(chat_id, options_text)
                     
-                    send_message(chat_id, 
-                                "\n✅ Бу ўйиннинг намунаси!\n\n"
-                                "Тўлиқ интерактив ўйинни веб-саҳифада ўйнаш мумкин.\n\n"
-                                "Яна ўйин яратиш учун /games буйруғини босинг.",
-                                reply_markup={"remove_keyboard": True})
+                    # Send link to full game
+                    web_app_url = os.getenv("WEBAPP_URL", "https://uzru-production.up.railway.app")
+                    
+                    play_button_text = get_text(native_lang, "play_on_web")
+                    keyboard = {
+                        "inline_keyboard": [[{"text": play_button_text, "web_app": {"url": web_app_url}}]]
+                    }
+                    send_message(chat_id, get_text(native_lang, "click_to_play"), reply_markup=keyboard)
                     
                     set_state(chat_id, current_mode="start")
                 else:
-                    send_message(chat_id, f"Ўйинни яратишда хатолик: {game_data.get('error', 'Номаълум хато')}")
+                    error_msg = game_data.get('error', 'Unknown error')
+                    send_message(chat_id, get_text(native_lang, "error_generating", error=error_msg))
             else:
-                send_message(chat_id, "Илтимос, мавзулар рўйхатидан бирини танланг.",
-                            reply_markup=get_topics_keyboard(all_topics))
+                send_message(chat_id, get_text(native_lang, "please_select_topic"),
+                             reply_markup=get_topics_keyboard(all_topics))
 
         else:
             send_message(chat_id, "Қандай ёрдам бера оламан? Бошлаш учун /start буйруғини босинг.",

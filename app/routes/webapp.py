@@ -37,8 +37,8 @@ def clean_text_for_tts(text: str) -> str:
         flags=re.UNICODE,
     )
     cleaned_text = emoji_pattern.sub(r'', text)
-    # Remove punctuation that can be misread by TTS, but keep spaces.
-    cleaned_text = re.sub(r'[^\w\s]', '', cleaned_text)
+    # Removing aggressive cleaning that was stripping non-Latin characters
+    # cleaned_text = re.sub(r'[^\w\s]', '', cleaned_text)
     return cleaned_text.strip()
 
 # Set up the template directory.
