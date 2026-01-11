@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-DEEPSEEK_API_URL = "https://api.deepseek.ai/v1/chat/completions"
+DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 
@@ -27,14 +27,18 @@ async def translate_text(text: str, target_language: str):
     prompt = f"Translate the following text to {target_language}. Provide only the translated text, without any additional explanations or context.\\n\\nText to translate: \\\"{text}\\\"\""
 
     payload = {
-        "model": "deepseek-chat",
-        "messages": [
-            {"role": "system", "content": "You are a powerful and accurate translator."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.2, 
-        "max_tokens": 1000,
-    }
+    "model": "deepseek-chat",
+    "messages": [
+        {"role": "system", "content": "You are an assistant that creates language exercises for children and responds in pure JSON format."},
+        {"role": "user", "content": prompt}
+    ],
+    "temperature": 0.8,
+    "max_tokens": 500,
+}
+
+    logger.debug(f"DeepSeek API Request URL: {DEEPSEEK_API_URL}") # <-- ДОБАВЬТЕ ЭТУ СТРОКУ
+    logger.debug(f"DeepSeek API Request Headers: {headers}") # <-- ДОБАВЬТЕ ЭТУ СТРОКУ
+    logger.debug(f"DeepSeek API Request Payload: {payload}") # <-- ДОБАВЬТЕ ЭТУ СТРОКУ
 
     try:
         async with httpx.AsyncClient() as client:
@@ -74,6 +78,13 @@ async def generate_multiple_choice_exercise(language: str, level: str, topic: st
     The question should be engaging for a child.
     All text in the "question" and "options" fields should be short, clear, and easy to pronounce for text-to-speech generation.
 
+    IMPORTANT LANGUAGE REQUIREMENTS:
+    - If the language is "uzbek" or contains "uzbek", generate ALL text (question, options) in UZBEK CYRILLIC (Ўзбек кирилл) script, NOT Latin script.
+    - Use Cyrillic letters like: Ў, Қ, Ғ, Ҳ instead of Latin O', Q, G', H
+    - Example in Uzbek Cyrillic: "Олма" (not "Olma"), "Бу нима?" (not "Bu nima?")
+    - For Russian language, use Russian Cyrillic as usual.
+    - For English and Korean, use their respective scripts.
+
     To ensure variety, please try to make this exercise different from ones that might have these themes or questions (represented by hashes): {", ".join(exclude_hashes or [])}
 
     Please return your response as a single JSON object with the following keys:
@@ -82,7 +93,8 @@ async def generate_multiple_choice_exercise(language: str, level: str, topic: st
     - "correct_answer_index": An integer (from 0 to 3) indicating the index of the correct answer in the "options" list.
     - "visual_prompt": A string describing a simple, friendly image related to the question.
     
-    Example: {{ "question": "What is 'apple' in {language}?", "options": ["Olma", "Banan", "Uzum", "Anor"], "correct_answer_index": 0, "visual_prompt": "A friendly red apple smiling." }}
+    Example for Uzbek: {{ "question": "Бу нима?", "options": ["Олма", "Банан", "Узум", "Анор"], "correct_answer_index": 0, "visual_prompt": "A friendly red apple smiling." }}
+    Example for Russian: {{ "question": "Что это?", "options": ["Яблоко", "Банан", "Виноград", "Гранат"], "correct_answer_index": 0, "visual_prompt": "A friendly red apple smiling." }}
 
     Do not include any text or explanations outside of the JSON object.
     """

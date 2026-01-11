@@ -84,7 +84,19 @@ def send_voice(chat_id, text, lang="ru"):
 
         filename = f"/tmp/{uuid.uuid4()}.mp3"
         
-        lang_to_use = lang if lang in ['en', 'ru', 'ko'] else 'en'
+        # Map language codes for gTTS
+        # For Uzbek (both latin and cyrillic), use Russian voice as gTTS doesn't support Uzbek
+        lang_map = {
+            'russian': 'ru',
+            'english': 'en', 
+            'korean': 'ko',
+            'uzbek': 'ru',  # Use Russian voice for Uzbek Cyrillic text
+            'uz': 'ru',
+            'ru': 'ru',
+            'en': 'en',
+            'ko': 'ko'
+        }
+        lang_to_use = lang_map.get(lang, 'en')
         logger.debug(f"Generating voice for text: '{clean_text}' in language: '{lang_to_use}' (original: '{lang}')")
         
         tts = gTTS(text=clean_text, lang=lang_to_use, slow=True)
@@ -114,8 +126,8 @@ def get_language_keyboard(langs: list, current_mode: str) -> dict:
     keyboard_buttons = []
     for lang in langs:
         display_name = {
-            "russian": "Rus tili 🇷🇺", "english": "Ingliz tili 🇬🇧",
-            "korean": "Koreys tili 🇰🇷", "uzbek": "O'zbek tili 🇺🇿"
+            "russian": "Рус тили 🇷🇺", "english": "Инглиз тили 🇬🇧",
+            "korean": "Корейс тили 🇰🇷", "uzbek": "Ўзбек тили 🇺🇿"
         }.get(lang, lang.capitalize())
         keyboard_buttons.append([{"text": display_name}])
     
@@ -197,36 +209,36 @@ async def telegram_webhook(req: Request):
             if command == "/start":
                 send_message(
                     chat_id,
-                    "Assalomu alaykum! AI til o'rganish botiga xush kelibsiz. "
-                    "Avval o'zingizning ona tilingizni tanlang:",
+                    "Ассалому алайкум! AI тил ўрганиш ботига хуш келибсиз. "
+                    "Аввал ўзингизнинг она тилингизни танланг:",
                     reply_markup=get_language_keyboard(["russian", "english", "korean", "uzbek"], "choose_native_language")
                 )
                 set_state(chat_id, current_mode="choose_native_language")
             elif command == "/help":
-                send_message(chat_id, "Hali yordam funksiyasi mavjud emas.")
+                send_message(chat_id, "Ҳали ёрдам функцияси мавжуд эмас.")
             elif command == "/voice_test":
-                send_message(chat_id, "Bu ovoz testi. Assalomu alaykum!")
-                send_voice(chat_id, "Bu ovoz testi. Assalomu alaykum!", lang="uz")
+                send_message(chat_id, "Бу овоз тести. Ассалому алайкум!")
+                send_voice(chat_id, "Бу овоз тести. Ассалому алайкум!", lang="uz")
             elif command == "/topics":
                 if "learn_language" in user_state and "level" in user_state:
                     learn_lang = user_state.get("learn_language")
                     topics = load_topics_for_telegram().get(learn_lang, [])
-                    send_message(chat_id, "Mavzular ro'yxati:", reply_markup=get_topics_keyboard(topics))
+                    send_message(chat_id, "Мавзулар рўйхати:", reply_markup=get_topics_keyboard(topics))
                     set_state(chat_id, current_mode="choose_topic")
                 else:
-                    send_message(chat_id, "Mavzularni ko'rish uchun avval til va darajani tanlashingiz kerak. Boshlash uchun /start bosing.")
+                    send_message(chat_id, "Мавзуларни кўриш учун аввал тил ва даражани танлашингиз керак. Бошлаш учун /start босинг.")
             else:
-                send_message(chat_id, "Noma'lum buyruq.")
+                send_message(chat_id, "Номаълум буйруқ.")
             return {"ok": True}
 
         # --- State-based interaction logic ---
         if current_mode == "choose_native_language":
             selected_native_lang_display = user_message_text.strip().replace(" 🇷🇺", "").replace(" 🇬🇧", "").replace(" 🇰🇷", "").replace(" 🇺🇿", "")
             valid_langs_map = {
-                "rus tili": "russian", "russian": "russian",
-                "ingliz tili": "english", "english": "english",
-                "koreys tili": "korean", "korean": "korean",
-                "o'zbek tili": "uzbek", "uzbek": "uzbek",
+                "рус тили": "russian", "rus tili": "russian", "russian": "russian",
+                "инглиз тили": "english", "ingliz tili": "english", "english": "english",
+                "корейс тили": "korean", "koreys tili": "korean", "korean": "korean",
+                "ўзбек тили": "uzbek", "o'zbek tili": "uzbek", "uzbek": "uzbek",
             }
             native_lang_slug = valid_langs_map.get(selected_native_lang_display.lower())
 
@@ -234,22 +246,22 @@ async def telegram_webhook(req: Request):
                 set_state(chat_id, native_language=native_lang_slug, current_mode="choose_learn_language")
                 send_message(
                     chat_id, 
-                    f"Sizning ona tilingiz: {native_lang_slug.capitalize()}. Endi o'rganish uchun tilni tanlang:",
+                    f"Сизнинг она тилингиз: {native_lang_slug.capitalize()}. Энди ўрганиш учун тилни танланг:",
                     reply_markup=get_language_keyboard(["russian", "english", "korean", "uzbek"], "choose_learn_language")
                 )
-                send_voice(chat_id, f"Sizning ona tilingiz: {native_lang_slug.capitalize()}.", lang=native_lang_slug)
+                send_voice(chat_id, f"Сизнинг она тилингиз: {native_lang_slug.capitalize()}.", lang=native_lang_slug)
             else:
-                send_message(chat_id, "Iltimos, ona tilingizni tanlang (Rus tili, Ingliz tili, Koreys tili, O'zbek tili).",
+                send_message(chat_id, "Илтимос, она тилингизни танланг (Рус тили, Инглиз тили, Корейс тили, Ўзбек тили).",
                              reply_markup=get_language_keyboard(["russian", "english", "korean", "uzbek"], "choose_native_language"))
 
         elif current_mode == "choose_learn_language":
             selected_learn_lang_display = user_message_text.strip().replace(" 🇷🇺", "").replace(" 🇬🇧", "").replace(" 🇰🇷", "").replace(" 🇺🇿", "")
             native_lang = user_state.get("native_language")
             valid_langs_map = {
-                "rus tili": "russian", "russian": "russian",
-                "ingliz tili": "english", "english": "english",
-                "koreys tili": "korean", "korean": "korean",
-                "o'zbek tili": "uzbek", "uzbek": "uzbek",
+                "рус тили": "russian", "rus tili": "russian", "russian": "russian",
+                "инглиз тили": "english", "ingliz tili": "english", "english": "english",
+                "корейс тили": "korean", "koreys tili": "korean", "korean": "korean",
+                "ўзбек тили": "uzbek", "o'zbek tili": "uzbek", "uzbek": "uzbek",
             }
             learn_lang_slug = valid_langs_map.get(selected_learn_lang_display.lower())
 
@@ -257,12 +269,12 @@ async def telegram_webhook(req: Request):
                 set_state(chat_id, learn_language=learn_lang_slug, current_mode="choose_level")
                 send_message(
                     chat_id, 
-                    f"Ajoyib! Siz {learn_lang_slug.capitalize()} tilini o'rganishni tanladingiz. Endi darajangizni tanlang:",
+                    f"Ажойиб! Сиз {learn_lang_slug.capitalize()} тилини ўрганишни танладингиз. Энди даражангизни танланг:",
                     reply_markup=get_level_keyboard()
                 )
-                send_voice(chat_id, f"Ajoyib! Siz {learn_lang_slug.capitalize()} tilini o'rganishni tanladingiz.", lang=learn_lang_slug)
+                send_voice(chat_id, f"Ажойиб! Сиз {learn_lang_slug.capitalize()} тилини ўрганишни танладингиз.", lang=learn_lang_slug)
             else:
-                send_message(chat_id, "Iltimos, o'rganish uchun tillardan birini tanlang (Rus tili, Ingliz tili, Koreys tili, O'zbek tili).",
+                send_message(chat_id, "Илтимос, ўрганиш учун тиллардан бирини танланг (Рус тили, Инглиз тили, Корейс тили, Ўзбек тили).",
                              reply_markup=get_language_keyboard(["russian", "english", "korean", "uzbek"], "choose_learn_language"))
         
         elif current_mode == "choose_level":
@@ -270,9 +282,9 @@ async def telegram_webhook(req: Request):
             learn_lang = user_state.get("learn_language")
             valid_levels = ["beginner", "intermediate", "advanced"]
             level_map = {
-                "boshlang'ich": "beginner", "beginner": "beginner",
-                "o'rta": "intermediate", "intermediate": "intermediate",
-                "yuqori": "advanced", "advanced": "advanced",
+                "бошланғич": "beginner", "boshlang'ich": "beginner", "beginner": "beginner",
+                "ўрта": "intermediate", "o'rta": "intermediate", "intermediate": "intermediate",
+                "юқори": "advanced", "yuqori": "advanced", "advanced": "advanced",
             }
             level_slug = level_map.get(selected_level)
 
@@ -281,12 +293,12 @@ async def telegram_webhook(req: Request):
                 topics = load_topics_for_telegram().get(learn_lang, [])
                 send_message(
                     chat_id, 
-                    f"Daraja {level_slug.capitalize()} tanlandi. Endi mavzuni tanlang:",
+                    f"Даража {level_slug.capitalize()} танланди. Энди мавзуни танланг:",
                     reply_markup=get_topics_keyboard(topics)
                 )
-                send_voice(chat_id, f"Daraja {level_slug.capitalize()} tanlandi. Endi mavzuni tanlang.", lang=learn_lang)
+                send_voice(chat_id, f"Даража {level_slug.capitalize()} танланди. Энди мавзуни танланг.", lang=learn_lang)
             else:
-                send_message(chat_id, "Iltimos, to'g'ri darajani tanlang (Beginner, Intermediate, Advanced).",
+                send_message(chat_id, "Илтимос, тўғри даражани танланг (Beginner, Intermediate, Advanced).",
                              reply_markup=get_level_keyboard())
 
         elif current_mode == "choose_topic":
@@ -297,8 +309,8 @@ async def telegram_webhook(req: Request):
 
             if selected_topic in all_topics:
                 set_state(chat_id, topic=selected_topic, current_mode="in_exercise")
-                send_message(chat_id, f"Mavzu '{selected_topic}' tanlandi. Mashq yuklanmoqda...")
-                send_voice(chat_id, f"Mavzu '{selected_topic}' tanlandi. Mashq yuklanmoqda.", lang=learn_lang)
+                send_message(chat_id, f"Мавзу '{selected_topic}' танланди. Машқ юкланмоқда...")
+                send_voice(chat_id, f"Мавзу '{selected_topic}' танланди. Машқ юкланмоқда.", lang=learn_lang)
                 
                 exercise_data = await generate_multiple_choice_exercise(
                     language=learn_lang, 
@@ -307,7 +319,7 @@ async def telegram_webhook(req: Request):
                     exclude_hashes=[] 
                 )
                 if exercise_data and not exercise_data.get("error"):
-                    question_text = f"Savol: {exercise_data['question']}"
+                    question_text = f"Савол: {exercise_data['question']}"
                     options_text_list = [f"{idx+1}. {opt}" for idx, opt in enumerate(exercise_data['options'])]
                     options_text_combined = "\\n".join(options_text_list)
                     
@@ -318,10 +330,10 @@ async def telegram_webhook(req: Request):
 
                     set_expected_answer(chat_id, str(exercise_data['correct_answer_index'] + 1)) 
                 else:
-                    send_message(chat_id, f"Mashqni yaratishda xatolik yuz berdi: {exercise_data.get('error', 'Nomalum xato')}")
+                    send_message(chat_id, f"Машқни яратишда хатолик юз берди: {exercise_data.get('error', 'Номаълум хато')}")
             else:
-                topics_text = "\\n".join([f"- {t}" for t in all_topics]) if all_topics else "(Mavzular topilmadi)"
-                send_message(chat_id, f"Iltimos, mavzular ro'yxatidan birini tanlang: \\n{topics_text}",
+                topics_text = "\n".join([f"- {t}" for t in all_topics]) if all_topics else "(Мавзулар топилмади)"
+                send_message(chat_id, f"Илтимос, мавзулар рўйхатидан бирини танланг: \n{topics_text}",
                              reply_markup=get_topics_keyboard(all_topics))
         
         elif current_mode == "in_exercise":
@@ -331,24 +343,24 @@ async def telegram_webhook(req: Request):
             if expected_answer_index_str and user_answer.isdigit():
                 expected_answer_index = int(expected_answer_index_str)
                 if int(user_answer) == expected_answer_index:
-                    send_message(chat_id, "To'g'ri javob! Barakalla!")
-                    send_voice(chat_id, "To'g'ri javob! Barakalla!", lang=user_state.get("native_language", "uz")) 
+                    send_message(chat_id, "Тўғри жавоб! Баракалла!")
+                    send_voice(chat_id, "Тўғри жавоб! Баракалла!", lang=user_state.get("native_language", "uz")) 
                 else:
-                    send_message(chat_id, "Noto'g'ri javob. Yana bir bor urinib ko'ring.")
-                    send_voice(chat_id, "Noto'g'ri javob. Yana bir bor urinib ko'ring.", lang=user_state.get("native_language", "uz"))
+                    send_message(chat_id, "Нотўғри жавоб. Яна бир бор уриниб кўринг.")
+                    send_voice(chat_id, "Нотўғри жавоб. Яна бир бор уриниб кўринг.", lang=user_state.get("native_language", "uz"))
             else:
-                send_message(chat_id, "Iltimos, javob variantining raqamini kiriting.",
+                send_message(chat_id, "Илтимос, жавоб вариантининг рақамини киритинг.",
                              reply_markup=get_exercise_options_keyboard(["1","2","3","4"])) # Show options again
 
             send_message(
                 chat_id, 
-                "Keyingi mashqni boshlash uchun /start buyrug'ini bosing yoki mavzuni o'zgartirish uchun /topics yozing.",
-                reply_markup={"remove_keyboard": True} # Remove custom keyboard
+                "Кейинги машқни бошлаш учун /start буйруғини босинг ёки мавзуни ўзгартириш учун /topics ёзинг.",
+                reply_markup={"remove_keyboard": True}
             )
             set_state(chat_id, current_mode="start")
 
         else:
-            send_message(chat_id, "Qanday yordam bera olaman? Boshlash uchun /start buyrug'ini bosing.",
+            send_message(chat_id, "Қандай ёрдам бера оламан? Бошлаш учун /start буйруғини босинг.",
                          reply_markup={"remove_keyboard": True})
 
     except Exception as e:
