@@ -142,7 +142,8 @@ async def get_exercise_page(request: Request, native_lang_slug: str, learn_lang_
     completed_hashes = get_completed_exercise_hashes(user.id)
     
     # Generate the exercise content, excluding completed ones and based on the topic
-    exercise_data = await generate_multiple_choice_exercise(learn_lang_slug, level, topic, list(completed_hashes))
+    # Questions will be in native language, answers in the language being learned
+    exercise_data = await generate_multiple_choice_exercise(learn_lang_slug, native_lang_slug, level, topic, list(completed_hashes))
     
     image_url = None
     # If the exercise was generated successfully, try to generate an image for it

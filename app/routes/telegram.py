@@ -209,8 +209,11 @@ async def telegram_webhook(req: Request):
             if command == "/start":
                 send_message(
                     chat_id,
-                    "Ассалому алайкум! AI тил ўрганиш ботига хуш келибсиз. "
-                    "Аввал ўзингизнинг она тилингизни танланг:",
+                    "Ассалому алайкум! AI тил ўрганиш ботига хуш келибсиз. 🎓\n\n"
+                    "Аввал ўзингизнинг она тилингизни танланг:\n\n"
+                    "💡 Кейинчалик:\n"
+                    "📚 /topics - Машқлар учун мавзулар\n"
+                    "🎮 /games - Интерактив ўйинлар",
                     reply_markup=get_language_keyboard(["russian", "english", "korean", "uzbek"], "choose_native_language")
                 )
                 set_state(chat_id, current_mode="choose_native_language")
@@ -227,6 +230,22 @@ async def telegram_webhook(req: Request):
                     set_state(chat_id, current_mode="choose_topic")
                 else:
                     send_message(chat_id, "Мавзуларни кўриш учун аввал тил ва даражани танлашингиз керак. Бошлаш учун /start босинг.")
+            elif command == "/games":
+                if "learn_language" in user_state and "level" in user_state:
+                    # Show game type selection
+                    game_keyboard = {
+                        "keyboard": [
+                            [{"text": "🎯 Мослаштириш ўйини"}, {"text": "🧠 Хотира ўйини"}],
+                            [{"text": "🎨 Судраб ташлаш"}, {"text": "❓ Викторина"}],
+                            [{"text": "/start"}]
+                        ],
+                        "resize_keyboard": True,
+                        "one_time_keyboard": True
+                    }
+                    send_message(chat_id, "Ўйин турини танланг:", reply_markup=game_keyboard)
+                    set_state(chat_id, current_mode="choose_game_type")
+                else:
+                    send_message(chat_id, "Ўйинларни кўриш учун аввал тил ва даражани танлашингиз керак. Бошлаш учун /start босинг.")
             else:
                 send_message(chat_id, "Номаълум буйруқ.")
             return {"ok": True}
@@ -310,10 +329,14 @@ async def telegram_webhook(req: Request):
             if selected_topic in all_topics:
                 set_state(chat_id, topic=selected_topic, current_mode="in_exercise")
                 send_message(chat_id, f"Мавзу '{selected_topic}' танланди. Машқ юкланмоқда...")
-                send_voice(chat_id, f"Мавзу '{selected_topic}' танланди. Машқ юкланмоқда.", lang=learn_lang)
+                
+                # Get native language for question generation
+                native_lang = user_state.get("native_language", "uzbek")
+                send_voice(chat_id, f"Мавзу '{selected_topic}' танланди. Машқ юкланмоқда.", lang=native_lang)
                 
                 exercise_data = await generate_multiple_choice_exercise(
-                    language=learn_lang, 
+                    learn_language=learn_lang,
+                    native_language=native_lang,
                     level=level, 
                     topic=selected_topic,
                     exclude_hashes=[] 
@@ -324,7 +347,8 @@ async def telegram_webhook(req: Request):
                     options_text_combined = "\\n".join(options_text_list)
                     
                     send_message(chat_id, question_text)
-                    send_voice(chat_id, exercise_data['question'], lang=learn_lang)
+                    # Question is now in native language, so use native_lang for TTS
+                    send_voice(chat_id, exercise_data['question'], lang=native_lang)
                     
                     send_message(chat_id, options_text_combined, reply_markup=get_exercise_options_keyboard(exercise_data['options']))
 
@@ -358,6 +382,125 @@ async def telegram_webhook(req: Request):
                 reply_markup={"remove_keyboard": True}
             )
             set_state(chat_id, current_mode="start")
+
+        elif current_mode == "choose_game_type":
+            # Map game type selection
+            game_type_map = {
+                "🎯 мослаштириш ўйини": "matching",
+                "🧠 хотира ўйини": "memory",
+                "🎨 судраб ташлаш": "drag_drop",
+                "❓ викторина": "quiz"
+            }
+            
+            selected_game_type = game_type_map.get(user_message_text.lower().strip())
+            
+            if selected_game_type:
+                set_state(chat_id, game_type=selected_game_type, current_mode="choose_game_topic")
+                
+                # Show topics for game
+                learn_lang = user_state.get("learn_language")
+                topics = load_topics_for_telegram().get(learn_lang, [])
+                send_message(chat_id, "Ўйин учун мавзу танланг:", reply_markup=get_topics_keyboard(topics))
+            else:
+                send_message(chat_id, "Илтимос, ўйин турини танланг.")
+                
+        elif current_mode == "choose_game_topic":
+            from app.game_generator import generate_interactive_game, generate_game_images
+            
+            selected_topic = user_message_text.strip()
+            learn_lang = user_state.get("learn_language")
+            native_lang = user_state.get("native_language", "uzbek")
+            level = user_state.get("level")
+            game_type = user_state.get("game_type", "matching")
+            all_topics = load_topics_for_telegram().get(learn_lang, [])
+            
+            if selected_topic in all_topics:
+                send_message(chat_id, f"Ўйин яратилмоқда... Илтимос кутинг ⏳")
+                
+                # Generate game
+                game_data = await generate_interactive_game(
+                    learn_language=learn_lang,
+                    native_language=native_lang,
+                    level=level,
+                    topic=selected_topic,
+                    game_type=game_type
+                )
+                
+                if game_data and not game_data.get("error"):
+                    # Generate images for the game (this may take time)
+                    send_message(chat_id, "Расмлар яратилмоқда... 🎨")
+                    game_data_with_images = await generate_game_images(game_data)
+                    
+                    # Send game information
+                    title = game_data_with_images.get("title", "Ўйин")
+                    instructions = game_data_with_images.get("instructions", "")
+                    
+                    send_message(chat_id, f"🎮 {title}\n\n{instructions}")
+                    
+                    # Send game items with images
+                    if game_type in ["matching", "drag_drop"]:
+                        items = game_data_with_images.get("items", [])
+                        for item in items[:3]:  # Send first 3 items as example
+                            word = item.get("word", "")
+                            translation = item.get("translation", "")
+                            image_url = item.get("image_url")
+                            
+                            caption = f"{word}\n({translation})"
+                            
+                            if image_url:
+                                send_photo(chat_id, image_url, caption)
+                            else:
+                                send_message(chat_id, caption)
+                            
+                            # Send voice for the word
+                            if word:
+                                send_voice(chat_id, word, lang=learn_lang)
+                    
+                    elif game_type == "memory":
+                        pairs = game_data_with_images.get("pairs", [])
+                        for pair in pairs[:3]:  # Send first 3 pairs as example
+                            word = pair.get("word", "")
+                            translation = pair.get("translation", "")
+                            image_url = pair.get("image_url")
+                            
+                            caption = f"{word}\n({translation})"
+                            
+                            if image_url:
+                                send_photo(chat_id, image_url, caption)
+                            else:
+                                send_message(chat_id, caption)
+                            
+                            if word:
+                                send_voice(chat_id, word, lang=learn_lang)
+                    
+                    elif game_type == "quiz":
+                        questions = game_data_with_images.get("questions", [])
+                        if questions:
+                            first_q = questions[0]
+                            question_text = first_q.get("question", "")
+                            options = first_q.get("options", [])
+                            image_url = first_q.get("image_url")
+                            
+                            send_message(chat_id, f"❓ {question_text}")
+                            
+                            if image_url:
+                                send_photo(chat_id, image_url)
+                            
+                            options_text = "\n".join([f"{i+1}. {opt}" for i, opt in enumerate(options)])
+                            send_message(chat_id, options_text)
+                    
+                    send_message(chat_id, 
+                                "\n✅ Бу ўйиннинг намунаси!\n\n"
+                                "Тўлиқ интерактив ўйинни веб-саҳифада ўйнаш мумкин.\n\n"
+                                "Яна ўйин яратиш учун /games буйруғини босинг.",
+                                reply_markup={"remove_keyboard": True})
+                    
+                    set_state(chat_id, current_mode="start")
+                else:
+                    send_message(chat_id, f"Ўйинни яратишда хатолик: {game_data.get('error', 'Номаълум хато')}")
+            else:
+                send_message(chat_id, "Илтимос, мавзулар рўйхатидан бирини танланг.",
+                            reply_markup=get_topics_keyboard(all_topics))
 
         else:
             send_message(chat_id, "Қандай ёрдам бера оламан? Бошлаш учун /start буйруғини босинг.",

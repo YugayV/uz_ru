@@ -57,9 +57,17 @@ async def translate_text(text: str, target_language: str):
         return f"An unexpected error occurred: {str(e)}"
 
 
-async def generate_multiple_choice_exercise(language: str, level: str, topic: str, exclude_hashes: list[str] = None):
+async def generate_multiple_choice_exercise(learn_language: str, native_language: str, level: str, topic: str, exclude_hashes: list[str] = None):
     """
     Generates a multiple-choice exercise for a specific topic as a JSON object.
+    The question will be in the native_language, and the answer options will be in the learn_language.
+    
+    Args:
+        learn_language: The language the user is learning (for answer options)
+        native_language: The user's native language (for the question)
+        level: Difficulty level (beginner, intermediate, advanced)
+        topic: The topic of the exercise
+        exclude_hashes: List of hashes to avoid duplicate exercises
     """
     if not DEEPSEEK_API_KEY:
         logger.error("DEEPSEEK_API_KEY is not set. Please check your .env file.")
@@ -70,31 +78,48 @@ async def generate_multiple_choice_exercise(language: str, level: str, topic: st
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
     }
 
+    # Map language names to readable formats for the prompt
+    lang_display = {
+        "russian": "Russian (Русский)",
+        "english": "English",
+        "korean": "Korean (한국어)",
+        "uzbek": "Uzbek Cyrillic (Ўзбек кирилл)"
+    }
+    
+    learn_lang_display = lang_display.get(learn_language, learn_language.capitalize())
+    native_lang_display = lang_display.get(native_language, native_language.capitalize())
+
     prompt = f"""
-    Create a simple and fun multiple-choice language exercise for a child learning {language} at a {level} level.
+    Create a simple and fun multiple-choice language exercise for a child learning {learn_lang_display} at a {level} level.
     The exercise must be about the topic: "{topic}".
     Use simple, common, and basic words suitable for a young child.
-    The target audience is native Uzbek speakers.
-    The question should be engaging for a child.
-    All text in the "question" and "options" fields should be short, clear, and easy to pronounce for text-to-speech generation.
+    
+    CRITICAL LANGUAGE REQUIREMENTS:
+    1. The QUESTION must be written in {native_lang_display} (the user's native language)
+    2. The ANSWER OPTIONS must be written in {learn_lang_display} (the language being learned)
+    3. This helps the child understand what is being asked in their native language, while learning vocabulary in the target language.
+    
+    SCRIPT REQUIREMENTS:
+    - If the language is "uzbek" or contains "uzbek", use UZBEK CYRILLIC (Ўзбек кирилл) script, NOT Latin script.
+    - Use Cyrillic letters: Ў, Қ, Ғ, Ҳ instead of Latin O', Q, G', H
+    - For Russian, use Russian Cyrillic
+    - For English and Korean, use their respective scripts
+    
+    The question should be engaging for a child and easy to pronounce for text-to-speech generation.
 
-    IMPORTANT LANGUAGE REQUIREMENTS:
-    - If the language is "uzbek" or contains "uzbek", generate ALL text (question, options) in UZBEK CYRILLIC (Ўзбек кирилл) script, NOT Latin script.
-    - Use Cyrillic letters like: Ў, Қ, Ғ, Ҳ instead of Latin O', Q, G', H
-    - Example in Uzbek Cyrillic: "Олма" (not "Olma"), "Бу нима?" (not "Bu nima?")
-    - For Russian language, use Russian Cyrillic as usual.
-    - For English and Korean, use their respective scripts.
-
-    To ensure variety, please try to make this exercise different from ones that might have these themes or questions (represented by hashes): {", ".join(exclude_hashes or [])}
+    To ensure variety, avoid exercises similar to these (represented by hashes): {", ".join(exclude_hashes or [])}
 
     Please return your response as a single JSON object with the following keys:
-    - "question": A string containing the question.
-    - "options": A list of 4 strings representing the possible answers.
-    - "correct_answer_index": An integer (from 0 to 3) indicating the index of the correct answer in the "options" list.
-    - "visual_prompt": A string describing a simple, friendly image related to the question.
+    - "question": A string containing the question in {native_lang_display}
+    - "options": A list of 4 strings in {learn_lang_display} representing the possible answers
+    - "correct_answer_index": An integer (from 0 to 3) indicating the index of the correct answer
+    - "visual_prompt": A string describing a simple, friendly image related to the question
     
-    Example for Uzbek: {{ "question": "Бу нима?", "options": ["Олма", "Банан", "Узум", "Анор"], "correct_answer_index": 0, "visual_prompt": "A friendly red apple smiling." }}
-    Example for Russian: {{ "question": "Что это?", "options": ["Яблоко", "Банан", "Виноград", "Гранат"], "correct_answer_index": 0, "visual_prompt": "A friendly red apple smiling." }}
+    Example (if native=Uzbek Cyrillic, learning=Russian):
+    {{ "question": "Бу нима?", "options": ["Яблоко", "Банан", "Виноград", "Гранат"], "correct_answer_index": 0, "visual_prompt": "A friendly red apple smiling." }}
+    
+    Example (if native=Russian, learning=English):
+    {{ "question": "Что это?", "options": ["Apple", "Banana", "Grape", "Pomegranate"], "correct_answer_index": 0, "visual_prompt": "A friendly red apple smiling." }}
 
     Do not include any text or explanations outside of the JSON object.
     """
