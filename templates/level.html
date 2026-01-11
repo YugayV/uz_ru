@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ learn_language_name }} ({{ native_language_name }}) - Darajani tanlang</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{ learn_language_name }}</h1>
+            <p>Sizning ona tilingiz: {{ native_language_name }}</p>
+            <p>Bilim darajangizni tanlang</p>
+        </header>
+        
+        <main class="level-selection">
+            <a href="/learn/{{ native_language_slug }}/{{ learn_language_slug }}/beginner" class="level-card">
+                <h2>Boshlang'ich</h2>
+                <p>(Beginner)</p>
+            </a>
+            <a href="/learn/{{ native_language_slug }}/{{ learn_lang_slug }}/intermediate" class="level-card">
+                <h2>O'rta</h2>
+                <p>(Intermediate)</p>
+            </a>
+            <a href="/learn/{{ native_language_slug }}/{{ learn_lang_slug }}/advanced" class="level-card">
+                <h2>Yuqori</h2>
+                <p>(Advanced)</p>
+            </a>
+        </main>
+        
+        <footer>
+            <a href="/learn/native/{{ native_language_slug }}" class="back-link">Boshqa til tanlash</a> | <a href="/translator" class="back-link">Tarjimon</a>
+            <p>&copy; 2026 AI Language Platform</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ language_name }} ({{ level_name }}) - Mashqlar</title>
+    <title>{{ learn_language_name }} ({{ level_name }}) - Mashqlar</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
@@ -18,23 +18,15 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s, border-color 0.3s;
+            transition: transform 0.1s ease, background-color 0.3s, border-color 0.3s;
         }
         .option-btn:hover {
             background-color: #f0f2f5;
             border-color: #3f51b5;
         }
-        .option-btn:active {
+        .option-btn:active { /* Эффект нажатия */
             transform: scale(0.98);
             background-color: #e8eaf6;
-        }
-        .visual-prompt {
-            padding: 15px;
-            background-color: #e8eaf6;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-style: italic;
-            color: #5c6bc0;
         }
         .feedback {
             margin-top: 15px;
@@ -43,30 +35,44 @@
         }
         .correct { color: #4caf50; }
         .incorrect { color: #f44336; }
+        .image-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
         .exercise-image {
             max-width: 100%;
             height: auto;
-            max-height: 300px;
+            max-height: 250px; /* Уменьшил максимальную высоту */
             border-radius: 12px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .image-placeholder {
+            padding: 20px;
+            background-color: #f0f2f5;
+            border-radius: 12px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="exercise-header">
-            <h1>{{ language_name }} - {{ level_name }} daraja</h1>
+            <h1>{{ learn_language_name }} - {{ level_name }} daraja</h1>
+            <p>Sizning ona tilingiz: {{ native_language_name }}</p>
+            <p>Mavzu: {{ topic }}</p>
         </header>
         
         <main class="exercise-area">
+            <div class="image-container">
+                {% if image_url %}
+                    <img src="{{ image_url }}" alt="Visual prompt" class="exercise-image">
+                {% else %}
+                    <div class="image-placeholder">
+                        <p>Не удалось загрузить картинку</p>
+                    </div>
+                {% endif %}
+            </div>
+
             {% if exercise and not exercise.error %}
             <div class="exercise-content">
-
-                {% if image_url %}
-                <img src="{{ image_url }}" alt="{{ exercise.visual_prompt }}" style="max-width: 100%; height: auto; max-height: 300px; border-radius: 12px; margin-bottom: 25px;">
-                {% endif %}
-
                 <h2 class="question">{{ exercise.question }}</h2>
                 
                 <div class="options-container" data-correct-index="{{ exercise.correct_answer_index }}">
@@ -76,10 +82,6 @@
                 </div>
 
                 <div id="feedback-message" class="feedback"></div>
-
-                <div class="visual-prompt">
-                    <strong>Tasvir uchun izoh:</strong> {{ exercise.visual_prompt }}
-                </div>
             </div>
             {% else %}
             <div class="exercise-content">
@@ -92,7 +94,7 @@
         </main>
         
         <footer>
-            <a href="/learn/{{ language_slug }}" class="back-link">Boshqa darajani tanlash</a> | <a href="/translator" class="back-link">Tarjimon</a>
+            <a href="/learn/{{ native_language_slug }}/{{ learn_language_slug }}/{{ level_slug }}" class="back-link">Boshqa darajani tanlash</a> | <a href="/translator" class="back-link">Tarjimon</a>
             <p>&copy; 2026 AI Language Platform</p>
         </footer>
     </div>
@@ -103,7 +105,6 @@
             const correctIndex = parseInt(container.getAttribute('data-correct-index'));
             const feedbackEl = document.getElementById('feedback-message');
             
-            // Disable all buttons after an answer is selected
             const buttons = container.getElementsByTagName('button');
             for (let btn of buttons) {
                 btn.disabled = true;
@@ -115,22 +116,25 @@
                 button.style.borderColor = '#4caf50';
                 button.style.backgroundColor = '#e8f5e9';
             } else {
-                feedbackEl.textContent = "Noto'g'ri. Yana bir bor urinib ko'ring.";
+                feedbackEl.textContent = "Noto'g'ri. Yana bir bor urinib ko'ring!";
                 feedbackEl.className = 'feedback incorrect';
                 button.style.borderColor = '#f44336';
                 button.style.backgroundColor = '#ffebee';
+                buttons[correctIndex].style.borderColor = '#4caf50';
+                buttons[correctIndex].style.backgroundColor = '#e8f5e9';
             }
-
-            // Show the "Next Exercise" button after a delay
-            setTimeout(() => {
+            
+            if (selectedIndex === correctIndex) {
                 document.getElementById('next-exercise-btn').style.display = 'block';
-            }, 1000);
+            }
         }
 
-        function goToNextExercise() {
-            // Here you would typically send a request to the server to save the progress
-            // For this example, we'll just reload the page
-            location.reload();
+        async function goToNextExercise() {
+            await fetch('/mark_completed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            window.location.reload();
         }
     </script>
 </body>

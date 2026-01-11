@@ -3,33 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sizning tilingizni tanlang | AI Language Platform</title>
+    <title>Tilni tanlang | AI Language Platform</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Sizning tilingizni tanlang</h1>
-            <p>Platformamizga xush kelibsiz! Avval o'zingizning ona tilingizni tanlang.</p>
+            <h1>O'rganish uchun tilni tanlang</h1>
+            <p>Assalomu alaykum! Platformamizga xush kelibsiz.</p>
+            <p>Sizning ona tilingiz: {{ native_language_name }}</p>
         </header>
         
         <main class="language-selection">
-            <a href="/learn/native/russian" class="language-card">
+            <a href="/learn/{{ native_language_slug }}/russian" class="language-card">
                 <div class="flag">🇷🇺</div>
                 <h2>Rus tili</h2>
+                <p>Rus tilini o'rganishni boshlang</p>
             </a>
-            <a href="/learn/native/english" class="language-card">
+            <a href="/learn/{{ native_language_slug }}/english" class="language-card">
                 <div class="flag">🇬🇧</div>
                 <h2>Ingliz tili</h2>
+                <p>Ingliz tilini o'rganishni boshlang</p>
             </a>
-            <a href="/learn/native/korean" class="language-card">
+            <a href="/learn/{{ native_language_slug }}/korean" class="language-card">
                 <div class="flag">🇰🇷</div>
                 <h2>Koreys tili</h2>
+                <p>Koreys tilini o'rganishni boshlang</p>
             </a>
-            <a href="/learn/native/uzbek" class="language-card">
+            <a href="/learn/{{ native_language_slug }}/uzbek" class="language-card">
                 <div class="flag">🇺🇿</div>
                 <h2>O'zbek tili</h2>
+                <p>O'zbek tilini o'rganishni boshlang</p>
             </a>
         </main>
         

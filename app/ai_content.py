@@ -1,7 +1,8 @@
+import os
 import httpx
 import json
-import os
-
+from dotenv import load_dotenv
+import base64
 DEEPSEEK_API_URL = "https://api.deepseek.ai/v1/chat/completions"
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
@@ -106,9 +107,9 @@ async def generate_multiple_choice_exercise(language: str, level: str, topic: st
     prompt = f"""
     Create a simple and fun multiple-choice language exercise for a child learning {language} at a {level} level.
     The exercise must be about the topic: "{topic}".
+    Use simple, common, and basic words suitable for a young child.
     The target audience is native Uzbek speakers.
     The question should be engaging for a child.
-    Provide a simple description for a relevant and cute cartoon-style image (a visual prompt).
     All text in the "question" and "options" fields should be short, clear, and easy to pronounce for text-to-speech generation.
 
     To ensure variety, please try to make this exercise different from ones that might have these themes or questions (represented by hashes): {", ".join(exclude_hashes or [])}
@@ -118,7 +119,7 @@ async def generate_multiple_choice_exercise(language: str, level: str, topic: st
     - "options": A list of 4 strings representing the possible answers.
     - "correct_answer_index": An integer (from 0 to 3) indicating the index of the correct answer in the "options" list.
     - "visual_prompt": A string describing a simple, friendly image related to the question.
-    
+
     Example: {{ "question": "What is 'apple' in {language}?", "options": ["Olma", "Banan", "Uzum", "Anor"], "correct_answer_index": 0, "visual_prompt": "A friendly red apple smiling." }}
 
     Do not include any text or explanations outside of the JSON object.
@@ -153,9 +154,10 @@ async def generate_multiple_choice_exercise(language: str, level: str, topic: st
 
 # --- Image and Audio Generation ---
 
-# Using a different public Hugging Face model for better availability
-IMAGE_GENERATION_API_URL = "https://api-inference.huggingface.co/models/prompthero/openjourney-v4"
-# It's recommended to add your Hugging Face token to environment variables for higher limits
+# --- Image and Audio Generation ---
+
+# Using a more reliable public Hugging Face model
+IMAGE_GENERATION_API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
 HF_TOKEN = os.getenv("HF_TOKEN") 
 
 async def generate_image(prompt: str) -> str | None:
@@ -163,40 +165,23 @@ async def generate_image(prompt: str) -> str | None:
     Generates an image from a text prompt using a Hugging Face model.
     Returns the URL of the generated image or None if it fails.
     """
-    if not HF_TOKEN:
-        # This makes it work out-of-the-box, but having a token is better.
-        image_api_url = IMAGE_GENERATION_API_URL
-        headers = {"Authorization": f"Bearer {HF_TOKEN}"} if HF_TOKEN else {}
-        payload = {"inputs": f"mdjrny-v4 style, cute simple cartoon drawing of {prompt}, for a children's book, simple white background, vector illustration"}
-    else:
-        # Use the recommended model if a token is available
-        image_api_url = IMAGE_GENERATION_API_URL
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {HF_TOKEN}"
-        }
-        payload = {"inputs": f"mdjrny-v4 style, cute simple cartoon drawing of {prompt}, for a children's book, simple white background, vector illustration, vibrant colors"}
+    headers = {
+        "Authorization": f"Bearer {HF_TOKEN}" if HF_TOKEN else "",
+        "Content-Type": "application/json"
+    }
+    # A very simple and direct prompt for reliability
+    payload = {"inputs": f"cute cartoon drawing of a {prompt}, simple, for kids, white background"}
 
     try:
-        # The model can take a while to load, so we use a long timeout.
         async with httpx.AsyncClient() as client:
-            response = await client.post(image_api_url, json=payload, headers=headers, timeout=120.0)
+            response = await client.post(IMAGE_GENERATION_API_URL, json=payload, headers=headers, timeout=120.0)
             
-            # Check if the response is an image
             if response.headers.get("content-type", "").startswith("image/"):
-                # We need to save the image and serve it, or upload it somewhere.
-                # For simplicity in a stateless environment, we'll convert it to a Data URL.
-                import base64
                 image_data = base64.b64encode(response.content).decode("utf-8")
                 return f"data:image/jpeg;base64,{image_data}"
             else:
-                # The API might return an error as JSON
-                logger.error(f"Image generation API returned non-image data: {response.text}")
+                print(f"Image generation API Error: {response.text}")
                 return None
-
-    except httpx.TimeoutException:
-        logger.error("Image generation timed out.")
-        return None
     except Exception as e:
-        logger.error(f"An unexpected error occurred during image generation: {str(e)}")
+        print(f"An unexpected error during image generation: {str(e)}")
         return None
