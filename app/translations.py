@@ -138,12 +138,12 @@ TRANSLATIONS = {
     }
 }
 
-def get_text(lang: str, key: str, **kwargs) -> str:
+def get_text(language_code: str, key: str, **kwargs) -> str:
     """
     Get translated text for a given language and key.
     
     Args:
-        lang: Language code (uzbek, russian, english, korean)
+        language_code: Language code (uzbek, russian, english, korean)
         key: Translation key
         **kwargs: Format arguments for the text
         
@@ -151,7 +151,7 @@ def get_text(lang: str, key: str, **kwargs) -> str:
         Translated and formatted text
     """
     # Default to Uzbek if language not found
-    translations = TRANSLATIONS.get(lang, TRANSLATIONS["uzbek"])
+    translations = TRANSLATIONS.get(language_code, TRANSLATIONS["uzbek"])
     text = translations.get(key, TRANSLATIONS["uzbek"].get(key, ""))
     
     # Format with provided arguments
