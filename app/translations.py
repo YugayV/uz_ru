@@ -151,8 +151,8 @@ def get_text(language_code: str, key: str, **kwargs) -> str:
         Translated and formatted text
     """
     # Default to Uzbek if language not found
-    translations = TRANSLATIONS.get(language_code, TRANSLATIONS["uzbek"])
-    text = translations.get(key, TRANSLATIONS["uzbek"].get(key, ""))
+    translations = TRANSLATIONS.get(language_code, TRANSLATIONS["russian"])
+    text = translations.get(key, TRANSLATIONS["russian"].get(key, ""))
     
     # Format with provided arguments
     if kwargs:

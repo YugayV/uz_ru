@@ -113,14 +113,16 @@ def send_voice(chat_id, text, lang="ru"):
 
 def send_message(chat_id, text, reply_markup=None):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
+    payload = {"chat_id": chat_id, "text": text}
     if reply_markup:
         payload["reply_markup"] = json.dumps(reply_markup) # Ensure reply_markup is JSON string
     try:
         response = requests.post(url, json=payload)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to send Telegram message: {e}", exc_info=True)
+        logger.error(f"Failed to send Telegram message: {e}")
+        if 'response' in locals() and response is not None:
+             logger.error(f"Telegram API response: {response.text}")
 
 # --- Keyboard Helper Functions ---
 def get_language_keyboard(langs: list, current_mode: str) -> dict:
