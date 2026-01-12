@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Language Game</title>
+    <style>
+        :root {
+            --primary: #6C5DD3;
+            --secondary: #FF754C;
+            --accent: #FFAF4E;
+            --background: #F0F3F9;
+            --surface: #FFFFFF;
+            --text: #1B1D21;
+            --success: #4CAF50;
+            --error: #F44336;
+            --radius: 16px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            width: 100%;
+            background: var(--surface);
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        h2 { margin: 5px 0 0; font-size: 1rem; color: #666; font-weight: normal; }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 20px auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .instructions {
+            background: #E2E0FF;
+            color: var(--primary);
+            padding: 15px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* --- Game Grid (Memory) --- */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .memory-card {
+            aspect-ratio: 1;
+            background: var(--surface);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, background 0.3s;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+        .memory-card.flipped, .memory-card.matched {
+            transform: rotateY(180deg);
+            background: var(--surface);
+        }
+        .memory-card .front, .memory-card .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius);
+            padding: 5px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        .memory-card .front {
+            background: var(--primary);
+            color: white;
+            font-size: 2rem;
+            transform: rotateY(0deg); /* This should be key frame logic, simplifying */
+        }
+        .memory-card .front::after { content: "?"; }
+        .memory-card .back {
+            transform: rotateY(180deg);
+        }
+        .memory-card img {
+            max-width: 80%;
+            max-height: 60%;
+            border-radius: 8px;
+        }
+
+        /* --- Matching Game --- */
+        .matching-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .matching-col {
+            width: 48%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .match-item {
+            background: var(--surface);
+            padding: 15px;
+            border-radius: var(--radius);
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .match-item.selected { border-color: var(--primary); background: #E2E0FF; }
+        .match-item.matched { border-color: var(--success); opacity: 0.5; pointer-events: none; }
+        .match-item.error { border-color: var(--error); animation: shake 0.5s; }
+
+        /* --- Quiz --- */
+        .quiz-card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .quiz-image {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .option-btn {
+            background: var(--background);
+            border: none;
+            padding: 15px;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .option-btn:hover { background: #dce1ea; }
+        .option-btn.correct { background: var(--success); color: white; }
+        .option-btn.wrong { background: var(--error); color: white; }
+
+        /* --- Controls --- */
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(108, 93, 211, 0.4);
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-secondary { background: var(--secondary); box-shadow: 0 4px 10px rgba(255, 117, 76, 0.4); }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+        
+        /* TTS Icon */
+        .tts-icon {
+            display: inline-block;
+            margin-left: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .memory-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1 id="game-title">Loading...</h1>
+        <h2 id="level-topic">{{ level }} - {{ topic }}</h2>
+    </div>
+
+    <div class="container">
+        <div class="instructions" id="game-instructions">Loading game data...</div>
+        
+        <div id="game-content">
+            <!-- Game UI generated by JS -->
+        </div>
+
+        <div class="controls" id="controls" style="display:none;">
+            <button class="btn" onclick="location.reload()">Restart</button>
+            <a href="/" class="btn btn-secondary">Home</a>
+        </div>
+    </div>
+
+    <script>
+        const gameData = {{ game_json | safe }};
+        const container = document.getElementById('game-content');
+        const titleEl = document.getElementById('game-title');
+        const instructionsEl = document.getElementById('game-instructions');
+        
+        // Initialize Game
+        function initGame() {
+            if (!gameData || gameData.error) {
+                container.innerHTML = `<div style="text-align:center; color: red;">${gameData.error || "Error loading game"}</div>`;
+                return;
+            }
+
+            titleEl.textContent = gameData.title;
+            instructionsEl.textContent = gameData.instructions;
+
+            switch(gameData.game_type) {
+                case 'matching':
+                case 'drag_drop': // Reusing matching interface for simplicity on mobile web
+                    renderMatchingGame();
+                    break;
+                case 'memory':
+                    renderMemoryGame();
+                    break;
+                case 'quiz':
+                    renderQuizGame();
+                    break;
+                default:
+                    container.innerHTML = "Unknown game type";
+            }
+        }
+
+        // --- TTS Helper ---
+        function playAudio(text) {
+            const audio = new Audio(`/tts?text=${encodeURIComponent(text)}&lang={{ learn_language_slug }}`);
+            audio.play();
+        }
+
+        // --- Matching Game Logic ---
+        let selectedItem = null;
+        let matchedCount = 0;
+
+        function renderMatchingGame() {
+            container.innerHTML = `<div class="matching-container">
+                <div class="matching-col" id="col-words"></div>
+                <div class="matching-col" id="col-meanings"></div>
+            </div>`;
+
+            const wordsCol = document.getElementById('col-words');
+            const meaningsCol = document.getElementById('col-meanings');
+            
+            // Create separate arrays and shuffle
+            const items = gameData.items;
+            const words = [...items].sort(() => Math.random() - 0.5);
+            const meanings = [...items].sort(() => Math.random() - 0.5);
+
+            words.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'match-item';
+                el.textContent = item.word;
+                el.dataset.id = item.id;
+                el.dataset.type = 'word';
+                el.onclick = () => handleMatchClick(el, item.sound_text);
+                wordsCol.appendChild(el);
+            });
+
+            meanings.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'match-item';
+                el.dataset.id = item.id;
+                el.dataset.type = 'meaning';
+                
+                if (item.image_url) {
+                    const img = document.createElement('img');
+                    img.src = item.image_url;
+                    img.style.maxWidth = '100%';
+                    img.style.borderRadius = '8px';
+                    el.appendChild(img);
+                    const txt = document.createElement('div');
+                    txt.textContent = item.translation;
+                    txt.style.marginTop = '5px';
+                    el.appendChild(txt);
+                } else {
+                    el.textContent = item.translation;
+                }
+                
+                el.onclick = () => handleMatchClick(el);
+                meaningsCol.appendChild(el);
+            });
+        }
+
+        function handleMatchClick(el, soundText) {
+            if (el.classList.contains('matched')) return;
+            if (soundText) playAudio(soundText);
+
+            if (!selectedItem) {
+                // First selection
+                selectedItem = el;
+                el.classList.add('selected');
+            } else {
+                // Second selection
+                if (selectedItem === el) return; // Clicked same item
+                if (selectedItem.dataset.type === el.dataset.type) {
+                    // Same column - switch selection
+                    selectedItem.classList.remove('selected');
+                    selectedItem = el;
+                    el.classList.add('selected');
+                    return;
+                }
+
+                // Check match
+                const id1 = selectedItem.dataset.id;
+                const id2 = el.dataset.id;
+
+                if (id1 === id2) {
+                    // Match!
+                    selectedItem.classList.remove('selected');
+                    selectedItem.classList.add('matched');
+                    el.classList.add('matched');
+                    selectedItem = null;
+                    matchedCount++;
+                    checkWin(gameData.items.length); // or items count
+                } else {
+                    // No match
+                    el.classList.add('error');
+                    selectedItem.classList.add('error');
+                    setTimeout(() => {
+                        el.classList.remove('error');
+                        selectedItem.classList.remove('error', 'selected');
+                        selectedItem = null;
+                    }, 500);
+                }
+            }
+        }
+
+        // --- Memory Game Logic ---
+        function renderMemoryGame() {
+            let cards = [];
+            // Create pairs
+            gameData.pairs.forEach(pair => {
+                // Card 1: Word
+                cards.push({ id: pair.id, type: 'word', content: pair.word, sound: pair.sound_text });
+                // Card 2: Image/Translation
+                cards.push({ id: pair.id, type: 'img', content: pair.image_url, text: pair.translation });
+            });
+            // Shuffle
+            cards.sort(() => Math.random() - 0.5);
+
+            const grid = document.createElement('div');
+            grid.className = 'memory-grid';
+            
+            cards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'memory-card';
+                cardEl.dataset.index = index;
+                cardEl.onclick = () => flipCard(cardEl, card);
+
+                // Front (Hidden)
+                const front = document.createElement('div');
+                front.className = 'front';
+                
+                // Back (Content)
+                const back = document.createElement('div');
+                back.className = 'back';
+                if (card.type === 'word') {
+                    back.textContent = card.content;
+                } else {
+                    if (card.content) {
+                        const img = document.createElement('img');
+                        img.src = card.content;
+                        back.appendChild(img);
+                    }
+                    if (card.text) {
+                        const caption = document.createElement('div');
+                        caption.textContent = card.text;
+                        back.appendChild(caption);
+                    }
+                }
+
+                cardEl.appendChild(front);
+                cardEl.appendChild(back);
+                grid.appendChild(cardEl);
+            });
+
+            container.appendChild(grid);
+        }
+
+        let flippedCards = [];
+        let lockBoard = false;
+
+        function flipCard(el, cardData) {
+            if (lockBoard) return;
+            if (el.classList.contains('flipped') || el.classList.contains('matched')) return;
+
+            el.classList.add('flipped');
+            if (cardData.sound) playAudio(cardData.sound);
+
+            flippedCards.push({ el, id: cardData.id });
+
+            if (flippedCards.length === 2) {
+                checkMemoryMatch();
+            }
+        }
+
+        function checkMemoryMatch() {
+            lockBoard = true;
+            const [c1, c2] = flippedCards;
+
+            if (c1.id === c2.id) {
+                c1.el.classList.add('matched');
+                c2.el.classList.add('matched');
+                resetBoard();
+                matchedCount++;
+                checkWin(gameData.pairs.length);
+            } else {
+                setTimeout(() => {
+                    c1.el.classList.remove('flipped');
+                    c2.el.classList.remove('flipped');
+                    resetBoard();
+                }, 1000);
+            }
+        }
+
+        function resetBoard() {
+            flippedCards = [];
+            lockBoard = false;
+        }
+
+        // --- Quiz Logic ---
+        let currentQIndex = 0;
+        let score = 0;
+
+        function renderQuizGame() {
+            if (currentQIndex >= gameData.questions.length) {
+                showWin("Quiz Completed! Score: " + score + "/" + gameData.questions.length);
+                return;
+            }
+
+            const q = gameData.questions[currentQIndex];
+            container.innerHTML = "";
+            
+            const card = document.createElement('div');
+            card.className = 'quiz-card';
+
+            if (q.image_url) {
+                const img = document.createElement('img');
+                img.src = q.image_url;
+                img.className = 'quiz-image';
+                card.appendChild(img);
+            }
+
+            const txt = document.createElement('h3');
+            txt.textContent = q.question;
+            card.appendChild(txt);
+
+            const optsDiv = document.createElement('div');
+            optsDiv.className = 'options-grid';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt;
+                btn.onclick = () => checkQuizAnswer(idx, q.correct_index, btn, q.sound_text);
+                optsDiv.appendChild(btn);
+            });
+
+            card.appendChild(optsDiv);
+            container.appendChild(card);
+        }
+
+        function checkQuizAnswer(selectedIdx, correctIdx, btn, sound) {
+            if (btn.disabled) return;
+            
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (selectedIdx === correctIdx) {
+                btn.classList.add('correct');
+                score++;
+                if (sound) playAudio(sound);
+            } else {
+                btn.classList.add('wrong');
+                allBtns[correctIdx].classList.add('correct');
+            }
+
+            setTimeout(() => {
+                currentQIndex++;
+                renderQuizGame();
+            }, 1500);
+        }
+
+        function checkWin(total) {
+             if (matchedCount === total) {
+                 showWin("Great Job!");
+             }
+        }
+
+        function showWin(msg) {
+            instructionsEl.textContent = msg || "Level Completed!";
+            document.getElementById('controls').style.display = 'block';
+            // Optional confetti here
+        }
+
+        // Return home if game data missing
+        if (!gameData) window.location.href = '/';
+        else initGame();
+
+    </script>
+</body>
+</html>

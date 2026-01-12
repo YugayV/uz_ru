@@ -262,3 +262,46 @@ async def text_to_speech(text: str, lang: str = 'en'):
     except Exception as e:
         logger.error(f"Failed to generate TTS audio: {e}", exc_info=True) # Added exc_info
         return Response(status_code=500, content="Failed to generate audio") # Return proper error
+
+@router.get("/play/{game_type}/{native_lang_slug}/{learn_lang_slug}/{level}/{topic}", response_class=HTMLResponse)
+async def play_game(request: Request, game_type: str, native_lang_slug: str, learn_lang_slug: str, level: str, topic: str):
+    """
+    Serves the interactive game page.
+    Generates game data and images, then renders the game template.
+    """
+    from app.game_generator import generate_interactive_game, generate_game_images
+    
+    # Generate base game content
+    game_data = await generate_interactive_game(learn_lang_slug, native_lang_slug, level, topic, game_type)
+    
+    if "error" in game_data:
+        return templates.TemplateResponse("error.html", {"request": request, "error": game_data["error"]})
+
+    # Generate images (this might take a while, consider async loading in future)
+    try:
+        game_data = await generate_game_images(game_data)
+    except Exception as e:
+        logger.error(f"Error generating images: {e}")
+        # Proceed without images or with placeholders if failed? 
+        # For now, we continue, templates should handle missing images.
+
+    language_map = {
+        "russian": "Rus tili",
+        "english": "Ingliz tili",
+        "korean": "Koreys tili",
+        "uzbek": "O'zbek tili"
+    }
+    
+    context = {
+        "request": request,
+        "native_language_name": language_map.get(native_lang_slug, native_lang_slug.capitalize()),
+        "native_language_slug": native_lang_slug,
+        "learn_language_name": language_map.get(learn_lang_slug, learn_lang_slug.capitalize()),
+        "learn_language_slug": learn_lang_slug,
+        "level": level,
+        "topic": topic,
+        "game_data": game_data,
+        "game_json": json.dumps(game_data) # Pass JSON for JS to use
+    }
+    
+    return templates.TemplateResponse("game.html", context)

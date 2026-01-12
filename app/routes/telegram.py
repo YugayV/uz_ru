@@ -656,11 +656,16 @@ async def telegram_webhook(req: Request):
                             send_message(chat_id, options_text)
                     
                     # Send link to full game
-                    web_app_url = os.getenv("WEBAPP_URL", "https://uzru-production.up.railway.app")
+                    import urllib.parse
+                    encoded_topic = urllib.parse.quote(selected_topic)
+                    
+                    # Construct Deep Link
+                    base_url = os.getenv("WEBAPP_URL", "https://uzru-production.up.railway.app").rstrip('/')
+                    full_game_url = f"{base_url}/play/{game_type}/{native_lang}/{learn_lang}/{level}/{encoded_topic}"
                     
                     play_button_text = get_text(native_lang, "play_on_web")
                     keyboard = {
-                        "inline_keyboard": [[{"text": play_button_text, "web_app": {"url": web_app_url}}]]
+                        "inline_keyboard": [[{"text": play_button_text, "web_app": {"url": full_game_url}}]]
                     }
                     send_message(chat_id, get_text(native_lang, "click_to_play"), reply_markup=keyboard)
                     
